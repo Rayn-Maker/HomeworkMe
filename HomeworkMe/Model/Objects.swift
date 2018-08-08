@@ -44,8 +44,11 @@ class Post {
     var seller: Student?
     var buyer: Student?
     var file: File?
-    var date: Date?
+    var timeStamp: Date?
     var uid: String?
+    var category:String?
+    var author: String?
+    var authorID: String?
     
 }
 
@@ -78,7 +81,7 @@ struct University {
     var uid: String?
 }
 
-struct fetchObject {
+struct FetchObject {
     var title: String?
     var uid: String?
     var dict: [String:AnyObject]?
@@ -106,7 +109,7 @@ class CommonFunctions {
         return alert
     }
     
-    func addToDirecotory(key:String, title:String, message:String, paramKey:String, paramName:String, foldername:String, universityKey:String = " ", subjectKey:String = " " ) -> UIAlertController {
+    func addToDirecotory(key:String, title:String, message:String, subKey:String, uniName:String, foldername:String, universityKey:String = " ", subjectKey:String = " " ) -> UIAlertController {
         let ref = Database.database().reference()
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addTextField { (textField) in
@@ -119,31 +122,33 @@ class CommonFunctions {
                 print(text)
                 
                 if foldername == "Universities" {
-                let parameters = [paramKey : key,
-                                  paramName : text]
+                let parameters = ["uid" : key,
+                                  "name" : text]
                 
                 let university = ["\(key)" : parameters]
                 ref.child(foldername).updateChildValues(university)
                 }
                 if foldername == "Subjects" {
-                    let parameters = [paramKey: key,
-                                      paramName : text]
+                    let parameters = ["uid": key,
+                                      "name" : text,
+                                      "uniName":uniName,
+                                      "uniId":universityKey]
                     let subject = ["\(key)": parameters]
                     let uniSection = [key:key]
                     ref.child(foldername).updateChildValues(subject)
                     ref.child("Universities").child(universityKey).child("Subjects").updateChildValues(uniSection)
                 }
-                if foldername == "Classes" {
-                    let parameters = [paramKey: key,
-                                      paramName: text]
-                    let classs = [key:parameters]
-                    let subFldr = [key:key]
-                    
-                    ref.child("Classes").updateChildValues(classs)
-                    ref.child("Subjects").child(subjectKey).child("Classes").updateChildValues(subFldr)
-                    ref.child("Universities").child(universityKey).child("Classes").updateChildValues(subFldr)
-                
-                }
+//                if foldername == "Classes" {
+//                    let parameters = [paramKey: key,
+//                                      paramName: text]
+//                    let classs = [key:parameters]
+//                    let subFldr = [key:key]
+//
+//                    ref.child("Classes").updateChildValues(classs)
+//                    ref.child("Subjects").child(subjectKey).child("Classes").updateChildValues(subFldr)
+//                    ref.child("Universities").child(universityKey).child("Classes").updateChildValues(subFldr)
+//
+//                }
             }
         }
         alert.addAction(cancel)

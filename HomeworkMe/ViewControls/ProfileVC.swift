@@ -11,63 +11,97 @@ import Firebase
 import FirebaseDatabase
 
 class ProfileVC: UIViewController {
-    
+    //// Edit School pluggings
     @IBOutlet weak var universityBtn: UIButton!
     @IBOutlet weak var degreeSubjectBtn: UIButton!
-    @IBOutlet weak var classRoomBtn: UIButton!
     @IBOutlet weak var classRoomTableView: UITableView!
     @IBOutlet weak var myClassesTableView: UITableView!
+    /// finish edit school pluggins
+    
+    // edit account pluggins
+    @IBOutlet weak var editAcctView: UIView!
+    @IBOutlet weak var fNameTxt: UITextField!
+    @IBOutlet weak var lNameTxt: UITextField!
+    @IBOutlet weak var emailTxt: UITextField!
+    @IBOutlet weak var phoneNumberTxt: UITextField!
+    
+    @IBOutlet weak var nameOnCard: UITextField!
+    @IBOutlet weak var cardNumber: UITextField!
+    @IBOutlet weak var cardPin: UITextField!
+    @IBOutlet weak var cardExpDate: UITextField!
+    // finish edit account pluggins
+    
+    // edit school var
     var handle: DatabaseHandle?; var handle2: DatabaseHandle?
     var commonFunctions = CommonFunctions()
-    var uni_sub_array = [fetchObject](); var subjectArray = [fetchObject](); var classArray = [fetchObject](); var myClassesArr = [fetchObject]()
+    var uni_sub_array = [FetchObject](); var subjectArray = [FetchObject](); var classArray = [FetchObject](); var myClassesArr = [FetchObject](); var uniArray = [FetchObject]()
     var subjectID: String?; var uniID: String?
-    var uniBtnOn = false; var subBtnOn = false; var classBtnOn = false;
+    var uniBtnOn = true; var subBtnOn = false; var classBtnOn = false;
     var subjectsDict: [String: AnyObject]?; var classeDict: [String: AnyObject]?
+    var tableViewTitleCounter: Int = 0 // helps track where the search is
+    var headerTitle: String = "Select School"
+    // finish edit school variable
+    
+    // edit account variables
+    
+    // finish edit account variables
      
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+        degreeSubjectBtn.isEnabled = false
+        degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal)
+        universityBtn.isEnabled = false ; universityBtn.setTitleColor(UIColor.gray, for: .normal)
         fetchMyClassKey()
+        fetchUni()
     }
     
 
-    // Student Info
-    @IBAction func addClassRoomPrsd(_ sender: Any) {
-        let ref = Database.database().reference()
-        let key = ref.child("Classes").childByAutoId().key
-        
-        present(commonFunctions.addToDirecotory(key: key, title: "New", message: "add classroom", paramKey: "uid", paramName: "name", foldername: "Classes", universityKey: uniID!, subjectKey:subjectID! ), animated: true, completion: nil)
-    }
     
     @IBAction func selectUniPrsd(_ sender: Any) {
-        fetch(folderName: "Universities")
+        tableViewTitleCounter = 0
+        headerTitle = "Select University"
+        degreeSubjectBtn.isEnabled = false
+        degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal); degreeSubjectBtn.setTitle("Subject", for: .normal)
+        universityBtn.isEnabled = false ; universityBtn.setTitleColor(UIColor.gray, for: .normal); universityBtn.setTitle("University", for: .normal)
+        uni_sub_array = uniArray
+        classRoomTableView.reloadData()
         uniBtnOn = true ; subBtnOn = false
     }
     
     @IBAction func selectSubPrsd(_ sender: Any) {
-        fetch(folderName: "Subjects")
+        headerTitle = "Select Subject"
+        tableViewTitleCounter = 1
+        degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal); degreeSubjectBtn.setTitle("Subject", for: .normal); degreeSubjectBtn.isEnabled = false
+        uni_sub_array = subjectArray
+        classRoomTableView.reloadData()
         uniBtnOn = false ; subBtnOn = true
     }
     
-    @IBAction func selectClass(_ sender: Any) {
-        fetch(folderName: "Classes")
-        uniBtnOn = true ; subBtnOn = false; classBtnOn = false
+    @IBAction func displayViewChanger(_ sender: UISegmentedControl) {
+        if sender.selectedSegmentIndex == 0{
+            editAcctView.isHidden = true
+        }
+        if sender.selectedSegmentIndex == 1{
+            editAcctView.isHidden = false
+        }
     }
-    /// finish Student info
-   
  
     
-    func fetch(folderName:String) { 
+    
+    
+    
+    func fetchUni() {
         let ref = Database.database().reference()
-        ref.child(folderName).queryOrderedByKey().observeSingleEvent(of: .value, with: { response in
+        ref.child("Universities").queryOrderedByKey().observeSingleEvent(of: .value, with: { response in
             if response.value is NSNull {
                 /// dont do anything
             } else {
                 self.uni_sub_array.removeAll()
                 let universities = response.value as! [String:AnyObject]
                 for (_,b) in universities {
-                    var university = fetchObject()
+                    var university = FetchObject()
                     if let uid = b["uid"] {
                         university.uid = uid as? String
                     }
@@ -76,12 +110,11 @@ class ProfileVC: UIViewController {
                     }
                     if let subDict = b["Subjects"]  {
                         university.dict = subDict as? [String : AnyObject]
-                        self.subjectsDict = subDict as? [String : AnyObject]
+                       
                     }
-                    if let classDict = b["Classes"] {
-                        university.dict = classDict as? [String : AnyObject]
-                        self.classeDict = classDict as? [String : AnyObject]
-                    }
+//                    if let classDict = b["Classes"] {
+//                        university.dict = classDict as? [String : AnyObject]
+//                    }
                     self.uni_sub_array.append(university)
                 }
                 self.classRoomTableView.reloadData()
@@ -97,8 +130,11 @@ class ProfileVC: UIViewController {
             } else {
                 self.uni_sub_array.removeAll()
                 let universities = response.value as! [String:AnyObject]
-                self.fetchSub(uniKey: self.subjectID!, dictCheck: universities["Classes"] as! [String : AnyObject])
-                self.classeDict = universities
+                if let dict =  universities["Classes"] as? [String : AnyObject] {
+                    self.fetchSub(uniKey: self.subjectID!,dictCheck: dict)
+                    self.classeDict = universities
+                }
+                
             }
         })
     }
@@ -130,7 +166,7 @@ class ProfileVC: UIViewController {
                 for (a,_) in dictCheck {
                     for (c,b) in classes {
                         if a == c {
-                            var classe = fetchObject()
+                            var classe = FetchObject()
                             if let uid = b["uid"] {
                                 classe.uid = uid as? String
                             }
@@ -158,7 +194,7 @@ class ProfileVC: UIViewController {
                 for (a,_) in dictCheck {
                     for (c,b) in subjects {
                         if a == c {
-                            var subject = fetchObject()
+                            var subject = FetchObject()
                             if let uid = b["uid"] {
                                 subject.uid = uid as? String
                             }
@@ -182,7 +218,7 @@ class ProfileVC: UIViewController {
                     for (a,_) in dictCheck {
                         for (c,b) in subjects {
                             if a == c {
-                                var subject = fetchObject()
+                                var subject = FetchObject()
                                 if let uid = b["uid"] {
                                     subject.uid = uid as? String
                                 }
@@ -199,18 +235,31 @@ class ProfileVC: UIViewController {
             })
         }
     }
+    
+    ///////////////////////////////////////// edit Account \\\\\\\\\\\\\\\\\\\\\\
+    @IBAction func savePrsd(_ sender: Any) {
+        
+    }
 }
 
 extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if tableView == classRoomTableView {
         if uniBtnOn {
+            tableViewTitleCounter = 1
             uniID = uni_sub_array[indexPath.row].uid
-            self.fetchSub(uniKey: uniID!, dictCheck: subjectsDict!)
+            uniArray = uni_sub_array
+            self.fetchSub(uniKey: uniID!, dictCheck: uni_sub_array[indexPath.row].dict!)
             uniBtnOn = false ; subBtnOn = true ; classBtnOn = false
+            headerTitle = uni_sub_array[indexPath.row].title!
+            universityBtn.isEnabled = true ; universityBtn.setTitleColor(UIColor.black, for: .normal)
         } else if subBtnOn {
+            tableViewTitleCounter = 2
             subjectID = uni_sub_array[indexPath.row].uid
+            headerTitle = uni_sub_array[indexPath.row].title!
             subjectArray = uni_sub_array
+            degreeSubjectBtn.isEnabled = true
+            degreeSubjectBtn.setTitleColor(UIColor.black, for: .normal)
             self.fetchClass(subKey: subjectID!)
         } else if classBtnOn {
             // here add classes to the user and user to the class
@@ -223,6 +272,7 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             
             if myClassesArr.contains(where: { $0.uid == key }) {
                 // print a statement saying class already added
+                
             } else {
                 ref.child("Students").child(uid!).child("Classes").updateChildValues(parameters)
                 ref.child("Classes").child(key!).child("Students").updateChildValues(parameters2)
@@ -252,6 +302,12 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
         if tableView == classRoomTableView {
              let cell = tableView.dequeueReusableCell(withIdentifier: "classRoomCells", for: indexPath)
              cell.textLabel!.text = uni_sub_array[indexPath.row].title
+            if myClassesArr.contains(where: { $0.uid == uni_sub_array[indexPath.row].uid }) {
+                // print a statement saying class already added
+                cell.accessoryType = .checkmark
+            } else {
+                cell.accessoryType = .none
+            }
             return cell
         } else if tableView == myClassesTableView {
             let cell = tableView.dequeueReusableCell(withIdentifier: "myClasses", for: indexPath)
@@ -279,7 +335,16 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if tableView == classRoomTableView {
-           return "Search Result"
+            if tableViewTitleCounter == 0 {
+                return headerTitle
+            }
+            if tableViewTitleCounter == 1 {
+                return headerTitle
+            }
+            if tableViewTitleCounter == 2 {
+                return headerTitle
+            }
+           
         }
         if tableView == myClassesTableView {
             return "My Classes"
