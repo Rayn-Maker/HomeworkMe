@@ -9,6 +9,8 @@
 import UIKit
 import CoreData
 import Firebase
+import Stripe
+import SquarePointOfSaleSDK
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,10 +19,78 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        STPPaymentConfiguration.shared().publishableKey = Constants.publishableKey
         FirebaseApp.configure()
         // Override point for customization after application launch.
+        logUser()
         return true
     }
+    
+    func logUser(){
+        if Auth.auth().currentUser != nil {
+            let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "userProfile") as! ProfileVC
+            self.window?.rootViewController = vc
+            
+            
+        }
+        
+    }
+    
+    func application(_ app: UIApplication, open url: URL, options: [UIApplicationOpenURLOptionsKey : Any] = [:]) -> Bool {
+        
+        let stripeHandled = Stripe.handleURLCallback(with: url)
+        
+        if (stripeHandled) {
+            return true
+        }
+        else {
+            // This was not a stripe url, do whatever url handling your app
+            // normally does, if any.
+        }
+        
+        guard let sourceApplication = options[.sourceApplication] as? String,
+            sourceApplication.hasPrefix("com.squareup.square") else {
+                return false
+        }
+        
+        do {
+            let response = try SCCAPIResponse(responseURL: url)
+            
+            if let error = response.error {
+                // Handle a failed request.
+                print(error.localizedDescription)
+            } else {
+                // Handle a successful request.
+            }
+            
+        } catch let error as NSError {
+            // Handle unexpected errors.
+            print(error.localizedDescription)
+        }
+        
+        return true
+    }
+ 
+    
+    // This method is where you handle URL opens if you are using univeral link URLs (eg "https://example.com/stripe_ios_callback")
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
+        if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
+            if let url = userActivity.webpageURL {
+                let stripeHandled = Stripe.handleURLCallback(with: url)
+                
+                if (stripeHandled) {
+                    return true
+                }
+                else {
+                    // This was not a stripe url, do whatever url handling your app
+                    // normally does, if any.
+                }
+            }
+            
+        }
+        return false 
+    }
+        
 
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.

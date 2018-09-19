@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VariablesViewState
+   version = "1.0">
+   <ContextStates>
+      <ContextState
+         contextName = "closure #2 in MyClassRoomVC.creatPost(cat:):MyClassRoomVC.swift">
+      </ContextState>
+      <ContextState
+         contextName = "closure #2 in MyClassRoomVC.creatPost(cat:placeHolder:):MyClassRoomVC.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "postTitle">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+   </ContextStates>
+</VariablesViewState>

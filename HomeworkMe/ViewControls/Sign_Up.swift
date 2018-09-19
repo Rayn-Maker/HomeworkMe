@@ -48,6 +48,9 @@ class Sign_Up: UIViewController {
                                                    "password": self.passwordTxt.text ?? " "]
                     
                     self.ref.child("Students").child(user.user.uid).setValue(userInfo)
+                    
+                    let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "EditBio") 
+                    self.present(vc, animated: true, completion: nil)
                 }
             }
             

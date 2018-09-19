@@ -18,93 +18,212 @@ class MyClassRoomVC: UIViewController {
     @IBOutlet weak var popupView: UIView!
     @IBOutlet weak var categoryBtn: UISegmentedControl!
     @IBOutlet weak var postsTableView: UITableView!
+    @IBOutlet weak var scheduleTableView: UITableView!
+    @IBOutlet weak var priceSlider: UISlider!
+    @IBOutlet weak var priceLbl: UILabel!
+    @IBOutlet weak var postPresetView: UIView!
+    @IBOutlet weak var datePicker: UIDatePicker!
+    @IBOutlet weak var newPostView1: UIStackView!
+    @IBOutlet weak var newPostView2: UIStackView!
+    @IBOutlet weak var titleText: UITextField!
+    @IBOutlet weak var titleLabel: UILabel!
+    @IBOutlet weak var inClassSwitch: UISwitch!
+    @IBOutlet weak var activitySpinner: UIActivityIndicatorView!
     
     var fetchObject = FetchObject()
-    var postTitle = String()
+    var postTitle:String?; var price:Int = 5; var category:String!
     var handle: DatabaseHandle?; var handle2: DatabaseHandle?
-    var myPostArr = [Post]()
+    var myPostArr = [Post](); var hmwrkArr = [Post](); var testArr = [Post](); var notesArr = [Post](); var otherArr = [Post](); var tutorArr = [Post](); var allPostHolder = [Post]()
+    var tableViewSections = ["All","Homework", "Test","Notes","Tutoring","Other"]
+    let seg = "classRoomToPostSegue" //classroom to post view
+    var postObject = Post() // variable to hold transfered data to PostView
+    var functions = CommonFunctions()
+    var schedules = [String]()
+    var schedule = String()
+    var userStorage: StorageReference!
+    let ref = Database.database().reference()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
-        postsTableView.estimatedRowHeight = 35
+        let currentDate: Date = Date()
+        dismissKeyboard()
+        self.datePicker.minimumDate = currentDate
+        postsTableView.estimatedRowHeight = 45
         postsTableView.rowHeight = UITableViewAutomaticDimension
         classRoomLbl.text = fetchObject.title
         fetchMyPostsKey()
+        priceLbl.text = "$5"
+        datePicker.addTarget(self, action: #selector(dateChanged(_:)), for: .valueChanged)
     }
     
     @IBAction func addPostPrsd(_ sender: Any) {
-        popupView.isHidden = false
-        categoryBtn.isHidden = false
+        postPresetView.isHidden = false
+        newPostView1.isHidden = false
+        newPostView2.isHidden = true
     }
     
+    let step: Float = 5
+    @IBAction func priceSlider(_ sender: UISlider) {
+//        priceLbl.text = "$\(Int(sender.value) )"
+        let roundedValue = round(sender.value / step) * step
+        sender.value = roundedValue
+        priceLbl.text = "$\(Int(sender.value))"
+        price = Int(sender.value)
+        // Do something else with the value
+    }
     
     @IBAction func backPrsd(_ sender: Any) {
         self.dismiss(animated: true, completion: nil)
     }
     
-    @IBAction func categoryPrsd(_ sender: UISegmentedControl) {
+    @IBAction func setSchedulePrsd(_ sender: Any) {
+        schedules.append(schedule)
+        scheduleTableView.reloadData()
+    }
+    
+    @IBAction func creatPostPrsd(_ sender: Any) {
+        creatPost()
+    }
+    
+    @IBAction func cancelPrsd(_ sender: Any) {
+        postPresetView.isHidden = true
+        newPostView1.isHidden = true
+        newPostView2.isHidden = true
+    }
+    
+    @IBAction func filterOptions(_ sender: UISegmentedControl) {
         if sender.selectedSegmentIndex == 0 {
-            postTitle = fetchObject.title! + " Homework #() (Insert Teacher Name)"
-            creatPost(cat: "Homework")
-            self.categoryBtn.isHidden = true
+            let indexPath = IndexPath(item: 0, section: 1)
+            self.postsTableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
         if sender.selectedSegmentIndex == 1 {
-            postTitle = fetchObject.title! + " Test (Insert Teacher Name)"
-            creatPost(cat: "Test")
-            self.categoryBtn.isHidden = true
+ 
+            let indexPath = IndexPath(item: 0, section: 2)
+            self.postsTableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
         if sender.selectedSegmentIndex == 2 {
-            postTitle = fetchObject.title! + " Notes (Insert Teacher Name)" // put date here for the future
-            creatPost(cat: "Notes")
-            self.categoryBtn.isHidden = true
+ 
+            let indexPath = IndexPath(item: 0, section: 3)
+            self.postsTableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
         if sender.selectedSegmentIndex == 3 {
-            postTitle = fetchObject.title! + " Tutoring (Insert Teacher Name)"
-            creatPost(cat: "Tutoring")
-            self.categoryBtn.isHidden = true
+ 
+            let indexPath = IndexPath(item: 0, section: 4)
+            self.postsTableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
         if sender.selectedSegmentIndex == 4 {
-            postTitle = fetchObject.title! + " Other (Insert Teacher Name)"
-            creatPost(cat: "Other")
-            self.categoryBtn.isHidden = true
+ 
+            let indexPath = IndexPath(item: 0, section: 5)
+            self.postsTableView.scrollToRow(at: indexPath, at: .top, animated: true)
         }
     }
     
-    func creatPost(cat:String){
+    @IBAction func categoryPrsd(_ sender: UISegmentedControl) {
+        if sender.selectedSegmentIndex == 0 {
+            category = "Homework"
+            titleText.placeholder = "Homework# & Teacher"
+            titleLabel.text = priceLbl.text! + " " + fetchObject.title! + " Homework"
+            newPostView1.isHidden = true
+            newPostView2.isHidden = false
+//            postPresetView.isHidden = true
+        }
+        if sender.selectedSegmentIndex == 1 {
+            category = "Test"
+            postTitle = fetchObject.title! + " Test "
+            newPostView1.isHidden = true
+            newPostView2.isHidden = false
+            titleText.placeholder = "Test# & Teacher"
+            titleLabel.text = priceLbl.text! + " " + fetchObject.title! + " Test"
+        }
+        if sender.selectedSegmentIndex == 2 {
+            category = "Notes"
+            newPostView1.isHidden = true
+            newPostView2.isHidden = false
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "E MMM dd"
+            let dateString = dateFormatter.string(from: Date())
+            titleText.placeholder = "Teacher's Name "
+            titleLabel.text = priceLbl.text! + " " + fetchObject.title! + "\(dateString) Notes "
+        }
+        if sender.selectedSegmentIndex == 3 {
+            category = "Tutoring"
+            newPostView1.isHidden = true
+            newPostView2.isHidden = false
+            titleText.placeholder = "Teacher's Name"
+            titleLabel.text = priceLbl.text! + " " + fetchObject.title! + " Tutoring"
+        }
+        if sender.selectedSegmentIndex == 4 {
+            category = "Other"
+            newPostView1.isHidden = true
+            newPostView2.isHidden = false
+            titleText.placeholder = "Teacher's Name"
+            titleLabel.text = priceLbl.text! + " " + fetchObject.title! + " Other"
+        }
+    }
+    
+    @objc func dateChanged(_ sender: UIDatePicker) {
+        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: sender.date)
+        if let day = components.day, let month = components.month, let year = components.year {
+            let strn = String(describing: sender.date)
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "E MMM dd hh:mm a"
+            schedule = dateFormatter.string(from: sender.date)
+        }
+    }
+    
+    func dismissKeyboard() {
+        let tap = UITapGestureRecognizer(target: self.view, action: #selector(UIView.endEditing(_:)))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
+    }
+    
+    var storageRef: Storage {
+        return Storage.storage()
+    }
+    
+    func creatPost(){
         let ref = Database.database().reference()
         let authrName = Auth.auth().currentUser?.email
         let postKey = ref.child("Posts").childByAutoId().key
-        let alert = UIAlertController(title: "New \(cat) Post", message: "", preferredStyle: .alert)
-        alert.addTextField { (text) in
-            text.text = self.postTitle
+        let dateString = String(describing: Date())
+        var picUrl:String!
+        var authorFname: String!
+        var authorLname: String!
+        if let picurl = UserDefaults.standard.object(forKey: "pictureUrl") as? String {
+           picUrl = picurl
+        } //UserDefaults.standard.set(lname, forKey: "lName")
+        if let fname = UserDefaults.standard.object(forKey: "fName") as? String {
+            authorFname = fname
         }
-        let post = UIAlertAction(title: "Post", style: .default) { (_) in
-            guard let text = alert.textFields?.first?.text else { return }
-            let dateString = String(describing: Date())
-            let newTxt = text.replacingOccurrences(of: "(Insert Teacher Name)", with: "")
+        if let lname = UserDefaults.standard.object(forKey: "lName") as? String {
+            authorLname = lname
+        }
+        if titleText.text != "" || titleText.text != nil {
+            let name = titleLabel.text! + " " + titleText.text!
             let parameters = ["uid":postKey,
-                              "name":newTxt,
-                              "authorID":Auth.auth().currentUser?.uid,
-                              "authorEmail": authrName,
+                              "name": name,
+                              "authorID":Auth.auth().currentUser?.uid ?? " ",
+                              "authorEmail": authrName ?? " ",
+                              "authorName": authorFname + " " + authorLname,
                               "timeStamp":dateString,
-                              "category":cat]
+                              "category":self.category,
+                              "price": self.price,
+                              "schedule": self.schedules,
+                              "studentInClass":self.inClassSwitch.isOn,
+                              "postPic": picUrl ] as [String : Any]
             let postParam = [postKey : parameters]
             let postParam2 = [postKey:postKey]
             ref.child("Posts").updateChildValues(postParam)
             ref.child("Classes").child(self.fetchObject.uid!).child("Posts").updateChildValues(postParam2)
             ref.child("Students").child((Auth.auth().currentUser?.uid)!).child("Posts").updateChildValues(postParam2)
-            
-            self.popupView.isHidden = true
-            
-            
+            self.postPresetView.isHidden = true
+            categoryBtn.isSelected = false
+        } else {
+            // shake text
         }
-        let cancel = UIAlertAction(title: "Cancel", style: .destructive) { (_) in
-            self.popupView.isHidden = true
-        }
-        alert.addAction(post); alert.addAction(cancel)
-        present(alert, animated: true, completion: nil)
-        categoryBtn.isSelected = false 
+        
+        
     }
     
     func fetchMyPostsKey() {
@@ -128,11 +247,21 @@ class MyClassRoomVC: UIViewController {
                 /// dont do anything \\\
             } else {
                 self.myPostArr.removeAll()
+                self.hmwrkArr.removeAll()
+                self.notesArr.removeAll()
+                self.tutorArr.removeAll()
+                self.testArr.removeAll()
+                self.otherArr.removeAll()
                 let posts = response.value as! [String:AnyObject]
                 for (a,_) in dictCheck {
                     for (c,b) in posts {
                         if a == c {
                             let postss = Post()
+                            if let fname = b["authorName"] as? String {
+                                 postss.authorName = fname
+                            } else {
+                                postss.authorName = " "
+                            }
                             if let uid = b["uid"] {
                                 postss.uid = uid as? String
                             }
@@ -143,7 +272,7 @@ class MyClassRoomVC: UIViewController {
                                 postss.authorID = authId as? String
                             }
                             if let authEmal = b["authorEmail"] {
-                                postss.author = authEmal as? String
+                                postss.authorEmail = authEmal as? String
                             }
                             if let tmStmp = b["timeStamp"] {
                                 let dateFormatter = DateFormatter()
@@ -153,12 +282,64 @@ class MyClassRoomVC: UIViewController {
                             }
                             if let catgry = b["category"] {
                                 postss.category = catgry as? String
+                            } //postPic studentInClass schedule
+                            if let postic = b["postPic"] {
+                                if postic != nil {
+                                    postss.postPic = postic as? String
+                                    postss.data = self.downloadImage(url: postic as! String) 
+                                }
+                              }
+                            if let stIn = b["studentInClass"] {
+                                postss.studentInClas = stIn as? Bool
+                            }
+                            if let skedl = b["schedule"] {
+                                if skedl != nil  {
+                                    postss.schedule = skedl as! [String]
+                                }
+                            }
+                            if let comments = b["comments"] as? [String:Any] {
+                                
+                            }
+                            if let price = b["price"] {
+                                postss.price = price as! Int
+                            } else {
+                                postss.price = 0
+                            }
+                            if let dlikers = b["disLikers"] as? [String:String] {
+                                if dlikers != nil {
+                                   postss.disLikers = [""]//dlikers.values as! [String]
+                                }
+                            }
+                            if let liker = b["likers"] as? [String:Any] {
+                                if liker != nil {
+                                    postss.likers = Array(liker.values) as! [String]
+                                }
                             }
                             self.myPostArr.append(postss)
+                            
+                            if postss.category == "Homework" {
+                                self.hmwrkArr.append(postss)
+                            }
+                            if postss.category == "Notes" {
+                                self.notesArr.append(postss)
+                            }
+                            if postss.category == "Tutoring" {
+                                self.tutorArr.append(postss)
+                            }
+                            if postss.category == "Test" {
+                                self.testArr.append(postss)
+                            }
+                            if postss.category == "Other" {
+                                self.otherArr.append(postss)
+                            }
                         }
                     }
                 }
+                self.myPostArr.sort(by: { $0.timeStamp?.compare(($1.timeStamp)!) == ComparisonResult.orderedDescending})
+                self.allPostHolder = self.myPostArr
                 self.postsTableView.reloadData()
+                self.activitySpinner.stopAnimating()
+                self.activitySpinner.isHidden = true
             }
         })
     }
@@ -172,26 +353,200 @@ class MyClassRoomVC: UIViewController {
         return newImage!.withRenderingMode(.alwaysTemplate)
     }
     
+    func downloadImage(url:String) -> Data {
+        var datas = Data()
+        let storage = Storage.storage().reference(forURL: "gs://hmwrkme.appspot.com")
+        userStorage = storage.child("Students")
+        
+        storageRef.reference(forURL: url).getData(maxSize: 1 * 1024 * 1024, completion: { (imgData, error) in
+            if error == nil {
+                if let data = imgData{
+                   datas = data
+                }
+            }
+            else {
+                print(error?.localizedDescription)
+            }
+        })
+         return datas
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == seg {
+            let vc = segue.destination as? PostView
+             vc?.postObject = self.postObject
+        }
+    }
 }
 
 extension MyClassRoomVC: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return myPostArr.count
+        if tableView == postsTableView {
+            switch (section) { //["All","Homework", "Test","Notes","Tutoring","Other"]
+            case 0:
+                return myPostArr.count
+            case 1:
+                return hmwrkArr.count
+            case 2:
+                return testArr.count
+            case 3:
+                return notesArr.count
+            case 4:
+                return tutorArr.count
+            case 5:
+                return otherArr.count
+            default:
+                return 0
+            }
+        }
+        if tableView == scheduleTableView {
+            return schedules.count
+        } else{
+            return 0
+        }
+       return 0
     }
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
+        if tableView == postsTableView {
+             return tableViewSections.count
+        }
+        if tableView == scheduleTableView {
+            return 1
+        } else {
+            return 0
+        }
+    }
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        if tableView == postsTableView {
+            return self.tableViewSections[section]
+        }
+        if tableView == scheduleTableView {
+            return "Schedule"
+        } else {
+            return ""
+        }
+        return ""
     }
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "postsCell", for: indexPath)
-        let cellTxt = myPostArr[indexPath.row].title! + "\n~" + myPostArr[indexPath.row].author! + "  || \(myPostArr[indexPath.row].timeStamp!)"
-        cell.textLabel?.numberOfLines = 0
-        cell.textLabel?.text = cellTxt
-//        cell.imageView?.image = #imageLiteral(resourceName: "manInWater")
-        cell.imageView?.image = imageWithImage(image: UIImage(named: "manInWater")!, scaledToSize: CGSize(width: 20, height: 20))
+        if tableView == postsTableView {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "postsCell", for: indexPath)
+            var cellTxt = " "
+            var urlString = ""
+            var data = Data()
+            switch (indexPath.section) { //["All","Homework", "Test","Notes","Tutoring","Other"]
+            case 0:
+                cellTxt = " " +  myPostArr[indexPath.row].title! + "\n~" + myPostArr[indexPath.row].authorName! + "\n \(functions.getTimeSince(date: myPostArr[indexPath.row].timeStamp!))"
+                if myPostArr[indexPath.row].postPic != nil {
+                    urlString = myPostArr[indexPath.row].postPic
+                    data = myPostArr[indexPath.row].data
+                }
+            case 1:
+                cellTxt = " " +  hmwrkArr[indexPath.row].title! + "\n~" + hmwrkArr[indexPath.row].authorName! + "\n \(functions.getTimeSince(date: hmwrkArr[indexPath.row].timeStamp!))"
+                if hmwrkArr[indexPath.row].postPic != nil {
+                    urlString = hmwrkArr[indexPath.row].postPic
+                    data = hmwrkArr[indexPath.row].data
+                }
+            case 2:
+                cellTxt = " " +  testArr[indexPath.row].title! + "\n~" + testArr[indexPath.row].authorName! + "\n \(functions.getTimeSince(date: testArr[indexPath.row].timeStamp!))"
+                
+                if testArr[indexPath.row].postPic != nil {
+                    urlString = testArr[indexPath.row].postPic
+                    data = testArr[indexPath.row].data
+                }
+            case 3:
+                cellTxt = " " +  notesArr[indexPath.row].title! + "\n~" + notesArr[indexPath.row].authorName! + "\n \(functions.getTimeSince(date: notesArr[indexPath.row].timeStamp!))"
+                if notesArr[indexPath.row].postPic != nil {
+                    urlString = notesArr[indexPath.row].postPic
+                    data = notesArr[indexPath.row].data
+                }
+            case 4:
+                cellTxt = " " +  tutorArr[indexPath.row].title! + "\n~" + tutorArr[indexPath.row].authorName! + "\n \(functions.getTimeSince(date: tutorArr[indexPath.row].timeStamp!))"
+                
+                if tutorArr[indexPath.row].postPic != nil {
+                    urlString = tutorArr[indexPath.row].postPic
+                    data = tutorArr[indexPath.row].data
+                }
+            case 5:
+                cellTxt = otherArr[indexPath.row].title! + "\n~" + otherArr[indexPath.row].authorName! + "\n \(functions.getTimeSince(date: otherArr[indexPath.row].timeStamp!))"
+                if otherArr[indexPath.row].postPic != nil {
+                    data = otherArr[indexPath.row].data
+                    urlString = otherArr[indexPath.row].postPic
+                }
+            default:
+                cellTxt = " "
+            }
+            cell.textLabel?.numberOfLines = 0
+            cell.textLabel?.text = cellTxt
+//                    cell.imageView?.image = #imageLiteral(resourceName: "manInWater")
 
+            cell.imageView?.image = imageWithImage(image: UIImage(named: "manInWater")!, scaledToSize: CGSize(width: 30, height: 30))
+            return cell
+        }
+        if tableView == scheduleTableView {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "scheduleCell", for: indexPath)
+            cell.textLabel?.text = schedules[indexPath.row]
+            return cell
+        } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "postsCell", for: indexPath)
+            
+            return cell
+        }
+        let cell = tableView.dequeueReusableCell(withIdentifier: "postsCell", for: indexPath)
+        
         return cell
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //
+        if tableView == postsTableView {
+            switch (indexPath.section) { //["All","Homework", "Test","Notes","Tutoring","Other"]
+            case 0:
+                postObject = myPostArr[indexPath.row]
+                self.performSegue(withIdentifier: seg, sender: self)
+            case 1:
+                postObject = hmwrkArr[indexPath.row]
+                self.performSegue(withIdentifier: seg, sender: self)
+            case 2:
+                postObject = testArr[indexPath.row]
+                self.performSegue(withIdentifier: seg, sender: self)
+            case 3:
+                postObject = notesArr[indexPath.row]
+                self.performSegue(withIdentifier: seg, sender: self)
+            case 4:
+                postObject = tutorArr[indexPath.row]
+                self.performSegue(withIdentifier: seg, sender: self)
+            case 5:
+                postObject = otherArr[indexPath.row]
+                self.performSegue(withIdentifier: seg, sender: self)
+            default:
+                print(seg)
+            }
+        }
+        if tableView == scheduleTableView {
+            
+        }
     }
+    
+ 
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if tableView == scheduleTableView {
+            if (editingStyle == UITableViewCellEditingStyle.delete) {
+                schedules.remove(at: indexPath.row)
+                scheduleTableView.deleteRows(at: [indexPath], with: .fade)
+            }
+        }
+    }
+    
+ 
+//
+//    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+//        return ""
+//    }
+//
+//    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+//        return 1
+//    }
+//
+//    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+//        return 1
+//    }
 }

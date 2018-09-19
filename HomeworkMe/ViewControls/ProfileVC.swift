@@ -9,11 +9,14 @@
 import UIKit
 import Firebase
 import FirebaseDatabase
+import FirebaseStorage
+import Stripe
 
-class ProfileVC: UIViewController {
+class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate  {
     //// Edit School pluggings
     @IBOutlet weak var universityBtn: UIButton!
     @IBOutlet weak var degreeSubjectBtn: UIButton!
+    @IBOutlet weak var cancelBtn: UIButton!
     @IBOutlet weak var classRoomTableView: UITableView!
     @IBOutlet weak var myClassesTableView: UITableView!
     /// finish edit school pluggins
@@ -24,11 +27,15 @@ class ProfileVC: UIViewController {
     @IBOutlet weak var lNameTxt: UITextField!
     @IBOutlet weak var emailTxt: UITextField!
     @IBOutlet weak var phoneNumberTxt: UITextField!
+    @IBOutlet weak var profilePic: UIImageView!
+    @IBOutlet weak var editViewBtn: UIButton!
+    @IBOutlet weak var changePicBtn: UIButton!
+    @IBOutlet weak var displaySegControBtn: UISegmentedControl!
+    @IBOutlet weak var classSearchView: UITableView!
+    @IBOutlet weak var classChoiceBtnView: UIStackView!
+    @IBOutlet weak var userName: UILabel!
+    @IBOutlet weak var activitySpinner: UIActivityIndicatorView!
     
-    @IBOutlet weak var nameOnCard: UITextField!
-    @IBOutlet weak var cardNumber: UITextField!
-    @IBOutlet weak var cardPin: UITextField!
-    @IBOutlet weak var cardExpDate: UITextField!
     // finish edit account pluggins
     
     // edit school var
@@ -40,6 +47,12 @@ class ProfileVC: UIViewController {
     var subjectsDict: [String: AnyObject]?; var classeDict: [String: AnyObject]?
     var tableViewTitleCounter: Int = 0 // helps track where the search is
     var headerTitle: String = "Select School"
+    var editIntChecker = 0
+    let picker = UIImagePickerController()
+    var userStorage: StorageReference!
+    var functions = CommonFunctions()
+    var ref: DatabaseReference!
+    var imageChangeCheck = false
     // finish edit school variable
     
     // edit account variables
@@ -48,17 +61,29 @@ class ProfileVC: UIViewController {
      
     override func viewDidLoad() {
         super.viewDidLoad()
-
         // Do any additional setup after loading the view.
+        picker.delegate = self
+        let storage = Storage.storage().reference(forURL: "gs://hmwrkme.appspot.com")
+        userStorage = storage.child("Students")
+        dismissKeyboard()
+        ref = Database.database().reference()
+        myClassesTableView.estimatedRowHeight = 35
+        myClassesTableView.rowHeight = UITableViewAutomaticDimension
+        classRoomTableView.estimatedRowHeight = 35
+        classRoomTableView.rowHeight = UITableViewAutomaticDimension
         degreeSubjectBtn.isEnabled = false
         degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal)
+        activitySpinner.startAnimating()
         universityBtn.isEnabled = false ; universityBtn.setTitleColor(UIColor.gray, for: .normal)
         fetchMyClassKey()
         fetchUni()
+        if let pictureDat = UserDefaults.standard.object(forKey: "pictureData") as? Data {
+            profilePic.image = UIImage(data: pictureDat)
+        }
+        editImage()
     }
-    
-
-    
+ 
+     
     @IBAction func selectUniPrsd(_ sender: Any) {
         tableViewTitleCounter = 0
         headerTitle = "Select University"
@@ -67,7 +92,7 @@ class ProfileVC: UIViewController {
         universityBtn.isEnabled = false ; universityBtn.setTitleColor(UIColor.gray, for: .normal); universityBtn.setTitle("University", for: .normal)
         uni_sub_array = uniArray
         classRoomTableView.reloadData()
-        uniBtnOn = true ; subBtnOn = false
+        uniBtnOn = true; subBtnOn = false
     }
     
     @IBAction func selectSubPrsd(_ sender: Any) {
@@ -76,7 +101,7 @@ class ProfileVC: UIViewController {
         degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal); degreeSubjectBtn.setTitle("Subject", for: .normal); degreeSubjectBtn.isEnabled = false
         uni_sub_array = subjectArray
         classRoomTableView.reloadData()
-        uniBtnOn = false ; subBtnOn = true
+        uniBtnOn = false; subBtnOn = true
     }
     
     @IBAction func displayViewChanger(_ sender: UISegmentedControl) {
@@ -87,11 +112,163 @@ class ProfileVC: UIViewController {
             editAcctView.isHidden = false
         }
     }
- 
     
+    @IBAction func editViewPrsd(_ sender: Any) {
+        // first time pressed
+        editIntChecker += 1
+        if editIntChecker % 2 == 0 {
+            editViewBtn.setTitle("Edit", for: .normal)
+            changePicBtn.isHidden = true
+            displaySegControBtn.isHidden = true
+            classSearchView.isHidden = true
+            classChoiceBtnView.isHidden = true
+            userName.isHidden = false
+            cancelBtn.isHidden = true
+            if imageChangeCheck {
+                saveImage()
+            }
+            editAcctView.isHidden = true
+            setPersonalInfoChange()
+            view.endEditing(true)
+        } else {
+            /// second time pressed
+            editViewBtn.setTitle("Save", for: .normal)
+            changePicBtn.isHidden = false
+            displaySegControBtn.isHidden = false
+            classSearchView.isHidden = false
+            classChoiceBtnView.isHidden = false
+            userName.isHidden = true
+            cancelBtn.isHidden = false
+            cancelBtn.isHidden = false
+            displaySegControBtn.selectedSegmentIndex = 0
+        }
+    }
     
+    @IBAction func changePicPrsd(_ sender: Any) {
+        changePicBtn.setTitle("Change", for: .normal)
+        picker.allowsEditing = true
+        picker.sourceType = .photoLibrary
+        present(picker, animated: true, completion: nil)
+        imageChangeCheck = true
+    }
     
+    @IBAction func signOutPressed(_ sender: Any) {
+        logout()
+        performSegue(withIdentifier: "logout", sender: self)
+    }
     
+    @IBAction func cancelSavePrsd(_ sender: Any) {
+        editViewBtn.setTitle("Edit", for: .normal)
+        changePicBtn.isHidden = true
+        displaySegControBtn.isHidden = true
+        classSearchView.isHidden = true
+        classChoiceBtnView.isHidden = true
+        userName.isHidden = false
+        cancelBtn.isHidden = true
+        view.endEditing(true)
+        editAcctView.isHidden = true
+        editIntChecker = 0
+    }
+    
+    @IBAction func editPayment(_ sender: Any) {
+        // Setup customer context
+//        let customerContext = STPCustomerContext(keyProvider: MyKeyProvider().shared())
+//
+//        // Setup payment methods view controller
+//        let paymentMethodsViewController = STPPaymentMethodsViewController(configuration: STPPaymentConfiguration.shared(), theme: STPTheme.default(), customerContext: customerContext, delegate: self)
+//
+//        // Present payment methods view controller
+//        let navigationController = UINavigationController(rootViewController: paymentMethodsViewController)
+//        present(navigationController, animated: true)
+    }
+    
+    func logout() {
+        if Auth.auth().currentUser != nil {
+            do {
+                try? Auth.auth().signOut()
+            } catch  {
+            }
+        }
+    }
+        
+    func dismissKeyboard() { 
+        let tap = UITapGestureRecognizer(target: self.view, action: Selector("endEditing:"))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+        if let image = info[UIImagePickerControllerEditedImage] as? UIImage {
+            self.profilePic.image = image
+        }
+        self.dismiss(animated: true, completion: nil)
+    }
+    
+    var storageRef: Storage {
+        return Storage.storage()
+    }
+    
+    func setPersonalInfoChange(){
+        let user = Auth.auth().currentUser
+        if fNameTxt.text != nil || fNameTxt.text == "" {
+            self.ref.child("Students").child(user!.uid).child("fName").setValue(fNameTxt.text)
+        }
+        if lNameTxt.text != nil || lNameTxt.text == "" {
+            self.ref.child("Students").child(user!.uid).child("lName").setValue(lNameTxt.text)
+        }
+        if emailTxt.text != nil || emailTxt.text == "" {
+            self.ref.child("Students").child(user!.uid).child("email").setValue(emailTxt.text)
+        }
+        if phoneNumberTxt.text != nil || phoneNumberTxt.text == "" {
+            self.ref.child("Students").child(user!.uid).child("phoneNumber").setValue(phoneNumberTxt.text)
+        }
+    }
+    
+    func editImage(){
+        profilePic.layer.borderWidth = 1
+        profilePic.layer.masksToBounds = false
+        profilePic.layer.borderColor = UIColor.black.cgColor
+        profilePic.layer.cornerRadius = profilePic.frame.height/2
+        profilePic.clipsToBounds = true
+    }
+    
+    func deletValue(indexPathRow:Int) {
+        let ref = Database.database().reference()
+        let key = myClassesArr[indexPathRow].uid
+        let uid = Auth.auth().currentUser?.uid
+            // delete class from student and student from class
+        ref.child("Students").child(uid!).child("Classes").child(key!).removeValue()
+        ref.child("Classes").child(key!).child("Students").child(uid!).removeValue()
+    }
+    
+    func saveImage() {
+        let user = Auth.auth().currentUser
+        let imageRef = self.userStorage.child("\(user?.uid ?? "").jpg")
+        let data = UIImageJPEGRepresentation(self.profilePic.image!, 0.5)
+        
+        let uploadTask = imageRef.putData(data!, metadata: nil, completion: { (metadata, err) in
+            if err != nil {
+                print(err!.localizedDescription)
+                self.present(self.functions.alertWithOk(errorMessagTitle: "Save Failed", errorMessage: err!.localizedDescription), animated: true, completion: nil)
+                return
+            } else {
+                UserDefaults.standard.set(data, forKey: "pictureData")
+            }
+            
+            imageRef.downloadURL(completion: { (url, er) in
+                if er != nil {
+                    print(er!.localizedDescription)
+                }
+                if let url = url {
+                    self.ref.child("Students").child(user!.uid).child("pictureUrl").setValue(url.absoluteString)
+
+                    
+                }
+            })
+        })
+        uploadTask.resume()
+    }
+   
     func fetchUni() {
         let ref = Database.database().reference()
         ref.child("Universities").queryOrderedByKey().observeSingleEvent(of: .value, with: { response in
@@ -112,9 +289,6 @@ class ProfileVC: UIViewController {
                         university.dict = subDict as? [String : AnyObject]
                        
                     }
-//                    if let classDict = b["Classes"] {
-//                        university.dict = classDict as? [String : AnyObject]
-//                    }
                     self.uni_sub_array.append(university)
                 }
                 self.classRoomTableView.reloadData()
@@ -128,13 +302,12 @@ class ProfileVC: UIViewController {
             if response.value is NSNull {
                 /// dont do anything
             } else {
-                self.uni_sub_array.removeAll()
+//                self.uni_sub_array.removeAll()
                 let universities = response.value as! [String:AnyObject]
                 if let dict =  universities["Classes"] as? [String : AnyObject] {
                     self.fetchSub(uniKey: self.subjectID!,dictCheck: dict)
                     self.classeDict = universities
                 }
-                
             }
         })
     }
@@ -148,9 +321,40 @@ class ProfileVC: UIViewController {
             } else {
                 self.myClassesArr.removeAll()
                 let myclass = response.value as! [String:AnyObject]
+                var name = " "
                 if let dict = myclass["Classes"] as? [String : AnyObject] {
                     self.fetchMyClass(dictCheck: dict)
                 }
+                if let fname = myclass["fName"] as? String {
+                    UserDefaults.standard.set(fname, forKey: "fName")
+                    name = fname
+                    self.fNameTxt.text = fname
+                }
+                if let phone = myclass["phoneNumber"] as? String {
+                    UserDefaults.standard.set(phone, forKey: "phoneNumber")
+                    self.phoneNumberTxt.text = phone
+                }
+                if let lname = myclass["lName"] as? String {
+                    UserDefaults.standard.set(lname, forKey: "lName")
+                    self.lNameTxt.text = lname
+                    self.emailTxt.text = (Auth.auth().currentUser?.email)!
+                    name += " " + lname + "\n " + (Auth.auth().currentUser?.email)!
+                }
+                self.userName.text = name
+                if let pictureURl = myclass["pictureUrl"] as? String {
+                    UserDefaults.standard.set(pictureURl, forKey: "pictureUrl")
+                    self.storageRef.reference(forURL: pictureURl).getData(maxSize: 1 * 1024 * 1024, completion: { (imgData, error) in
+                    if error == nil {
+                        if let data = imgData{
+                            UserDefaults.standard.set(data, forKey: "pictureData")
+                            self.profilePic.image = UIImage(data: data)
+                        }
+                    }
+                    else {
+                        print(error?.localizedDescription)
+                    }
+                })
+              }
             }
         })
     }
@@ -177,6 +381,8 @@ class ProfileVC: UIViewController {
                         }
                     }
                 }
+                self.activitySpinner.stopAnimating()
+                self.activitySpinner.isHidden = true 
                 self.myClassesTableView.reloadData()
             }
         })
@@ -225,6 +431,12 @@ class ProfileVC: UIViewController {
                                 if let title = b["name"] {
                                     subject.title = title as? String
                                 }
+                                if let title = b["subjectID"] {
+                                    subject.subjectID = title as? String
+                                } //uniId
+                                if let title = b["uniId"] {
+                                    subject.uniID = title as? String
+                                }
                                 self.uni_sub_array.append(subject)
                             }
                         }
@@ -237,8 +449,14 @@ class ProfileVC: UIViewController {
     }
     
     ///////////////////////////////////////// edit Account \\\\\\\\\\\\\\\\\\\\\\
-    @IBAction func savePrsd(_ sender: Any) {
-        
+
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "profileToClasses" {
+            let vc = segue.destination as? MyClassRoomVC
+            let indexPath = myClassesTableView.indexPathForSelectedRow
+            vc?.fetchObject = myClassesArr[(indexPath?.row)!]
+        }
     }
 }
 
@@ -250,7 +468,7 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             uniID = uni_sub_array[indexPath.row].uid
             uniArray = uni_sub_array
             self.fetchSub(uniKey: uniID!, dictCheck: uni_sub_array[indexPath.row].dict!)
-            uniBtnOn = false ; subBtnOn = true ; classBtnOn = false
+            uniBtnOn = false ; subBtnOn = true; classBtnOn = false
             headerTitle = uni_sub_array[indexPath.row].title!
             universityBtn.isEnabled = true ; universityBtn.setTitleColor(UIColor.black, for: .normal)
         } else if subBtnOn {
@@ -269,39 +487,33 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             let uid = Auth.auth().currentUser?.uid
             let parameters: [String:String] = [key! : key!]
             let parameters2: [String:String] = [uid! : uid!]
-            
             if myClassesArr.contains(where: { $0.uid == key }) {
-                // print a statement saying class already added
-                
             } else {
                 ref.child("Students").child(uid!).child("Classes").updateChildValues(parameters)
                 ref.child("Classes").child(key!).child("Students").updateChildValues(parameters2)
             }
             // delete it from the class array
-                
-        }
+         }
         } else if tableView == myClassesTableView{
-            // delete class or go to class with a popup
-            let ref = Database.database().reference()
-            let key = myClassesArr[indexPath.row].uid
-            let uid = Auth.auth().currentUser?.uid
-            let alert = UIAlertController(title: "\(myClassesArr[indexPath.row].title ?? "")", message: "Perform action", preferredStyle: .alert)
-            let delete = UIAlertAction(title: "Delete", style: .destructive) { (_) in
-                // delete class from student and student from class
-                ref.child("Students").child(uid!).child("Classes").child(key!).removeValue()
-                ref.child("Classes").child(key!).child("Students").child(uid!).removeValue()
-                
-            }
-            let view = UIAlertAction(title: "View", style: .default) { (_) in
-                // view the class room Segue to the classroom.
-            }
-            alert.addAction(delete);  alert.addAction(view); present(alert, animated: true, completion: nil)
+                self.performSegue(withIdentifier: "profileToClasses", sender: self)
         }
     }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+        if tableView == myClassesTableView {
+            if (editingStyle == UITableViewCellEditingStyle.delete) {
+                deletValue(indexPathRow: indexPath.row)
+                myClassesArr.remove(at: indexPath.row)
+                myClassesTableView.deleteRows(at: [indexPath], with: .fade)
+            }
+        }
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if tableView == classRoomTableView {
              let cell = tableView.dequeueReusableCell(withIdentifier: "classRoomCells", for: indexPath)
              cell.textLabel!.text = uni_sub_array[indexPath.row].title
+            cell.textLabel?.numberOfLines = 0
             if myClassesArr.contains(where: { $0.uid == uni_sub_array[indexPath.row].uid }) {
                 // print a statement saying class already added
                 cell.accessoryType = .checkmark
@@ -312,6 +524,7 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
         } else if tableView == myClassesTableView {
             let cell = tableView.dequeueReusableCell(withIdentifier: "myClasses", for: indexPath)
             cell.textLabel!.text = myClassesArr[indexPath.row].title
+            cell.textLabel?.numberOfLines = 0
             return cell
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "myClasses", for: indexPath)
@@ -352,8 +565,4 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             return ""
         }
     }
-    // change header color hear if necessary
-//    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-//        //
-//    }
 }

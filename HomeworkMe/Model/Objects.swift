@@ -47,9 +47,18 @@ class Post {
     var timeStamp: Date?
     var uid: String?
     var category:String?
-    var author: String?
+    var authorName: String?
+    var authorEmail: String!
     var authorID: String?
-    
+    var price: Int!
+    var data: Data!
+    var postPic: String!
+    var studentInClas: Bool!
+    var schedule = [String]()
+    var likers = [String]()
+    var disLikers = [String]()
+    var notes = [Note]()
+    var noteDict = [String:String]()
 }
 
 
@@ -58,6 +67,13 @@ struct File {
     var data: Data?
     var post: Post?
     
+}
+
+struct Note {
+    var note: String!
+    var time: String!
+    var author: String!
+    var key: String!
 }
 
 struct Billing {
@@ -85,6 +101,10 @@ struct FetchObject {
     var title: String?
     var uid: String?
     var dict: [String:AnyObject]?
+    var subjectID: String?
+    var subName:String!
+    var uniID: String?
+    var uniName: String?
 }
 
 struct Reciept {
@@ -138,17 +158,6 @@ class CommonFunctions {
                     ref.child(foldername).updateChildValues(subject)
                     ref.child("Universities").child(universityKey).child("Subjects").updateChildValues(uniSection)
                 }
-//                if foldername == "Classes" {
-//                    let parameters = [paramKey: key,
-//                                      paramName: text]
-//                    let classs = [key:parameters]
-//                    let subFldr = [key:key]
-//
-//                    ref.child("Classes").updateChildValues(classs)
-//                    ref.child("Subjects").child(subjectKey).child("Classes").updateChildValues(subFldr)
-//                    ref.child("Universities").child(universityKey).child("Classes").updateChildValues(subFldr)
-//
-//                }
             }
         }
         alert.addAction(cancel)
@@ -177,6 +186,38 @@ class CommonFunctions {
                 }
             }
         })
+    }
+    
+    func getTimeSince(date:Date) -> String {
+        var calendar = NSCalendar.autoupdatingCurrent
+        calendar.timeZone = NSTimeZone.system
+        let components = calendar.dateComponents([ .month, .day, .minute, .hour, .second ], from: date, to: Date())
+        //        let months = components.month
+        let days = components.day
+        let hours = components.hour
+        let minutes = components.minute
+        let secs = components.second
+        var time:Int = days!; var measur:String = "Days ago"
+        
+        if days == 1 {
+            measur = "Day ago"
+        } else if days! < 1 {
+            measur = "hours ago"
+            time = hours!
+           if hours == 1 {
+                measur = "hour ago"
+           } else if hours! < 1 {
+            measur = "minutes ago"
+            time = minutes!
+           if minutes == 1 {
+            measur = "minute ago"
+           } else if minutes! < 1 {
+            measur = "seconds ago"
+            time = secs!
+        }
+      }
+    }
+        return "\(time)\(measur)"
     }
 }
 
