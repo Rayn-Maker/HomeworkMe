@@ -29,8 +29,9 @@
 import Foundation
 
 enum Constants {
-  static let publishableKey = "pk_test_hIXWAqb9WYIRUKxvST0Dqlnk"
-  static let baseURLString = "https://intense-coast-55656.herokuapp.com/"
+  static let publishableKey = "pk_live_zElKyvWz0R0pJiEmf42HAcii"
+  static let baseURLString = "https://fierce-gorge-75882.herokuapp.com/"
   static let defaultCurrency = "usd"
   static let defaultDescription = "Purchase from Homeworkme iOS"
+//    let customerId = UserDefaults.standard.string(forKey: "customerId")
 }

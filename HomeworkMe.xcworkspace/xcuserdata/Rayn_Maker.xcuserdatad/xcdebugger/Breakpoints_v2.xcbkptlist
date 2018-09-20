@@ -57,13 +57,13 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "HomeworkMe/Model/New Group/StripeClient.swift"
-            timestampString = "559018872.144906"
+            filePath = "HomeworkMe/Model/Stripe2/MyAPIClient.swift"
+            timestampString = "559115884.087023"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "64"
-            endingLineNumber = "64"
-            landmarkName = "completeCharge(with:amount:completion:)"
+            startingLineNumber = "55"
+            endingLineNumber = "55"
+            landmarkName = "createCustomerKey(withAPIVersion:completion:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -73,13 +73,29 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "HomeworkMe/Model/New Group/StripeClient.swift"
-            timestampString = "559018872.146472"
+            filePath = "HomeworkMe/Model/Stripe2/MyAPIClient.swift"
+            timestampString = "559115884.087148"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "67"
-            endingLineNumber = "67"
-            landmarkName = "completeCharge(with:amount:completion:)"
+            startingLineNumber = "61"
+            endingLineNumber = "61"
+            landmarkName = "createCustomerKey(withAPIVersion:completion:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "HomeworkMe/ViewControls/Sign_Up.swift"
+            timestampString = "559115884.087225"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "38"
+            endingLineNumber = "38"
+            landmarkName = "registerPrsd(_:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

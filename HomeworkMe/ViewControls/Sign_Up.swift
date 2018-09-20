@@ -36,8 +36,8 @@ class Sign_Up: UIViewController {
         if fNameTxt.text != nil && lNameTxt.text != nil && passwordTxt.text != nil && conPaswordTxt.text != nil && emailTxt.text != nil && fNameTxt.text != " " && lNameTxt.text != " " && passwordTxt.text != " " && conPaswordTxt.text != " " && emailTxt.text != " " {
             Auth.auth().createUser(withEmail: self.emailTxt.text!, password: self.passwordTxt.text!) { (user, error) in
                 if error != nil {
-                    let alert = self.alert.alertWithOk(errorMessagTitle: "Something went wrong", errorMessage: (error?.localizedDescription)!)
-                    self.present(alert, animated: true, completion: nil)
+//                    let alert = self.alert.alertWithOk(errorMessagTitle: "Something went wrong", errorMessage: (error?.localizedDescription)!)
+//                    self.present(alert, animated: true, completion: nil)
                 }  /// Catch any errors and present it to the screen.
                 
                 if let user = user {

@@ -53,6 +53,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     var functions = CommonFunctions()
     var ref: DatabaseReference!
     var imageChangeCheck = false
+    var Id: String?
     // finish edit school variable
     
     // edit account variables
@@ -312,6 +313,24 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         })
     }
     
+    func fetchCustomKey() {
+        let ref = Database.database().reference()
+        ref.child("stripe_customers").queryOrderedByKey().observeSingleEvent(of: .value, with: { response in
+            if response.value is NSNull {
+                /// dont do anything
+            } else {
+                //                self.uni_sub_array.removeAll()
+                let universities = response.value as! [String:AnyObject]
+                for (x,y) in universities {
+                    if x == self.Id {
+                        
+                        UserDefaults.standard.set(y["customer_id"], forKey: "customerId")
+                    }
+                }
+            }
+        })
+    }
+    
     func fetchMyClassKey() {
         let ref = Database.database().reference()
         let uid = Auth.auth().currentUser?.uid
@@ -333,12 +352,20 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
                 if let phone = myclass["phoneNumber"] as? String {
                     UserDefaults.standard.set(phone, forKey: "phoneNumber")
                     self.phoneNumberTxt.text = phone
+                } //email
+                if let email = myclass["email"] as? String {
+                    UserDefaults.standard.set(email, forKey: "email")
                 }
                 if let lname = myclass["lName"] as? String {
                     UserDefaults.standard.set(lname, forKey: "lName")
                     self.lNameTxt.text = lname
                     self.emailTxt.text = (Auth.auth().currentUser?.email)!
                     name += " " + lname + "\n " + (Auth.auth().currentUser?.email)!
+                }
+                if let id = myclass["uid"] as? String {
+                    UserDefaults.standard.set(id, forKey: "userId")
+                    self.Id = id
+                    self.fetchCustomKey()
                 }
                 self.userName.text = name
                 if let pictureURl = myclass["pictureUrl"] as? String {

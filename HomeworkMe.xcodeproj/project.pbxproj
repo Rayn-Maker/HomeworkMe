@@ -16,7 +16,6 @@
 		68129E5A2150DAFE000F319A /* InventoryViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68129E4C2150DAE6000F319A /* InventoryViewController.swift */; };
 		68129E5B2150DAFE000F319A /* InventoryPuppyTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68129E4D2150DAE9000F319A /* InventoryPuppyTableViewCell.swift */; };
 		68129E5C2150DAFE000F319A /* CheckoutTotalTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68129E4E2150DAEC000F319A /* CheckoutTotalTableViewCell.swift */; };
-		68129E5D2150DAFE000F319A /* CheckoutViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68129E4F2150DAEC000F319A /* CheckoutViewController.swift */; };
 		68129E5E2150DAFE000F319A /* DataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68129E502150DAF0000F319A /* DataProvider.swift */; };
 		68129E5F2150DAFE000F319A /* DetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68129E512150DAF3000F319A /* DetailViewController.swift */; };
 		68129E602150DAFE000F319A /* CheckoutPuppyTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68129E522150DAF7000F319A /* CheckoutPuppyTableViewCell.swift */; };
@@ -63,7 +62,6 @@
 		68129E4C2150DAE6000F319A /* InventoryViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InventoryViewController.swift; sourceTree = "<group>"; };
 		68129E4D2150DAE9000F319A /* InventoryPuppyTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InventoryPuppyTableViewCell.swift; sourceTree = "<group>"; };
 		68129E4E2150DAEC000F319A /* CheckoutTotalTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CheckoutTotalTableViewCell.swift; sourceTree = "<group>"; };
-		68129E4F2150DAEC000F319A /* CheckoutViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CheckoutViewController.swift; path = "../../../../../../Downloads/RWPuppies-Starter/RWPuppies/CheckoutViewController.swift"; sourceTree = "<group>"; };
 		68129E502150DAF0000F319A /* DataProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataProvider.swift; sourceTree = "<group>"; };
 		68129E512150DAF3000F319A /* DetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetailViewController.swift; sourceTree = "<group>"; };
 		68129E522150DAF7000F319A /* CheckoutPuppyTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CheckoutPuppyTableViewCell.swift; sourceTree = "<group>"; };
@@ -118,7 +116,6 @@
 				68129E482150DADD000F319A /* CheckoutCart.swift */,
 				68129E522150DAF7000F319A /* CheckoutPuppyTableViewCell.swift */,
 				68129E4E2150DAEC000F319A /* CheckoutTotalTableViewCell.swift */,
-				68129E4F2150DAEC000F319A /* CheckoutViewController.swift */,
 				68129E502150DAF0000F319A /* DataProvider.swift */,
 				68129E512150DAF3000F319A /* DetailViewController.swift */,
 				68129E532150DAFB000F319A /* FeaturedViewController.swift */,
@@ -373,7 +370,6 @@
 				685EB60C21124DFB001A7A5C /* HomeworkMe.xcdatamodeld in Sources */,
 				688EBCA32152121F0011CFA3 /* CheckoutRowView.swift in Sources */,
 				68129E5C2150DAFE000F319A /* CheckoutTotalTableViewCell.swift in Sources */,
-				68129E5D2150DAFE000F319A /* CheckoutViewController.swift in Sources */,
 				685EB62A211A86D3001A7A5C /* MyClassRoomVC.swift in Sources */,
 				68129E582150DAFE000F319A /* Puppy.swift in Sources */,
 				68226CBA2122867800277FC5 /* MyClassMates.swift in Sources */,

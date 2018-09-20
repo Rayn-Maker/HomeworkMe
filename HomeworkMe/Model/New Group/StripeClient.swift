@@ -53,9 +53,12 @@ final class StripeClient {
     func completeCharge(with token: STPToken, amount: Int, completion: @escaping (Result) -> Void) {
         // 1
         let url = baseURL.appendingPathComponent("charge")
+        let customer =  UserDefaults.standard.string(forKey: "customerId")
+//        let email =  UserDefaults.standard.string(forKey: "email")
         // 2
         let params: [String: Any] = [
-            "token": token.tokenId,
+//            "tokenId": token.tokenId,
+            "customer" : customer ?? "",
             "amount": amount,
             "currency": Constants.defaultCurrency,
             "description": Constants.defaultDescription
@@ -69,6 +72,51 @@ final class StripeClient {
                     completion(Result.success)
                 case .failure(let error):
                     completion(Result.failure(error))
+                }
+        }
+    }
+    
+    func addCard(with token: STPToken, amount: Int, completion: @escaping (Result) -> Void) {
+        // 1
+        let url = baseURL.appendingPathComponent("addCard")
+        let customer =  UserDefaults.standard.string(forKey: "customerId")
+        let email =  UserDefaults.standard.string(forKey: "email")
+        // 2
+        let params: [String: Any] = [
+            "tokenId": token.tokenId,
+            "customer" : customer ?? "",
+            "amount": amount,
+            "currency": Constants.defaultCurrency,
+            "description": Constants.defaultDescription,
+            "email" : email ?? ""
+        ]
+        // 3
+        Alamofire.request(url, method: .post, parameters: params)
+            .validate(statusCode: 200..<300)
+            .responseString { response in
+                switch response.result {
+                case .success:
+                    completion(Result.success)
+                case .failure(let error):
+                    completion(Result.failure(error))
+                }
+        }
+    }
+    
+    func createCustomerKey(withAPIVersion apiVersion: String, completion: @escaping STPJSONResponseCompletionBlock) {
+        let url = self.baseURL.appendingPathComponent("ephemeral_keys")
+        let customerId = UserDefaults.standard.string(forKey: "customerId")
+        Alamofire.request(url, method: .post, parameters: [
+            "api_version": apiVersion,
+            "customer_id": customerId ?? ""
+            ])
+            .validate(statusCode: 200..<300)
+            .responseJSON { responseJSON in
+                switch responseJSON.result {
+                case .success(let json):
+                    completion(json as? [String: AnyObject], nil)
+                case .failure(let error):
+                    completion(nil, error)
                 }
         }
     }

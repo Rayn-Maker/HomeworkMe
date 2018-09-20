@@ -37,6 +37,7 @@ class PostView: UIViewController {
     var authorFname = "" ; var authorLname = " " 
     let ref = Database.database().reference()
     lazy var functions2 = Functions.functions()
+    let settingsVC = SettingsViewController()
     
     // stripe payment setup
      
@@ -117,6 +118,10 @@ class PostView: UIViewController {
     
     @IBAction func purchesPrsd(_ sender: Any) {
         addCard()
+//        let checkoutViewController = CheckoutViewController(product: "product",
+//                                                            price: 100,
+//                                                            settings: self.settingsVC.settings)
+//        self.navigationController?.pushViewController(checkoutViewController, animated: true)
         /*
         if !selectSchedule.isEmpty {
             if selectSchedule.count > 0 {
@@ -278,30 +283,25 @@ extension PostView: UITableViewDataSource, UITableViewDelegate {
 extension PostView: STPAddCardViewControllerDelegate {
     
     func addCardViewControllerDidCancel(_ addCardViewController: STPAddCardViewController) {
-        navigationController?.popViewController(animated: true)
+        dismiss(animated: true)
     }
     
     func addCardViewController(_ addCardViewController: STPAddCardViewController, didCreateToken token: STPToken, completion: @escaping STPErrorBlock) {
-//        functions2.httpsCallable("charge").call { (<#HTTPSCallableResult?#>, <#Error?#>) in
-//            <#code#>
-//        }
-        StripeClient.shared.completeCharge(with: token, amount: 200) { result in
+        
+        
+        StripeClient.shared.completeCharge(with: token, amount: 000) { result in
             switch result {
             // 1
             case .success:
                 completion(nil)
                 
-                let alertController = UIAlertController(title: "Congrats", message: "Your payment was successful!", preferredStyle: .alert)
-                let alertAction = UIAlertAction(title: "OK", style: .default, handler: { _ in
-                    self.navigationController?.popViewController(animated: true)
-                })
-                alertController.addAction(alertAction)
-                self.present(alertController, animated: true)
+                //self.dismiss(animated: true)
             // 2
             case .failure(let error):
                 completion(error)
             }
         }
+        
     }
 }
 
