@@ -12,10 +12,11 @@ target 'HomeworkMe' do
 	pod 'Firebase/Storage'
 	pod 'Firebase/Functions'
 	pod 'Stripe'
-    pod 'SquarePointOfSaleSDK'
+   	pod 'SquarePointOfSaleSDK'
 	pod 'Alamofire'
-    pod 'AlamofireImage', '~> 3.3'
-    pod 'PayPal-iOS-SDK'
-
-
+    	pod 'AlamofireImage', '~> 3.3'
+    	pod 'PayPal-iOS-SDK'
+	pod 'GooglePlaces'
+  	pod 'GooglePlacePicker'
+  	pod 'GoogleMaps'
 end

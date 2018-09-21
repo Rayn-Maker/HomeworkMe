@@ -121,8 +121,22 @@ class PostView: UIViewController {
     }
     
     @IBAction func purchesPrsd(_ sender: Any) {
-        addCard()
-  
+        if !selectSchedule.isEmpty {
+            if selectSchedule.count > 0 {
+                let alert2 = UIAlertController(title: "Pay with", message: "", preferredStyle: .alert)
+                let square = UIAlertAction(title: "Cash", style: .default) { (response) in
+                    self.addCard() 
+                }
+                alert2.addAction(square)
+                present(alert2, animated: true, completion: nil)
+                
+            }
+        } else {
+            let alert = UIAlertController(title: "Missing Schedule", message: "Please select a date to meet up", preferredStyle: .alert)
+            let ok = UIAlertAction(title: "Ok", style: .default, handler: nil)
+            alert.addAction(ok)
+            present(alert, animated: true , completion: nil)
+        }
     }
     
     @IBAction func disLikers(_ sender: Any) {

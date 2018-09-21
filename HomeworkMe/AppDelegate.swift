@@ -11,6 +11,8 @@ import CoreData
 import Firebase
 import Stripe
 import SquarePointOfSaleSDK
+import GooglePlaces
+import GoogleMaps
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -21,7 +23,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         STPPaymentConfiguration.shared().publishableKey = Constants.publishableKey
         FirebaseApp.configure()
-        // Override point for customization after application launch.
+        GMSPlacesClient.provideAPIKey("AIzaSyD5kvNqtnOYCyn1ig5OQ7px_cwYqgyuEcM")
+        GMSServices.provideAPIKey("AIzaSyD5kvNqtnOYCyn1ig5OQ7px_cwYqgyuEcM")
         logUser()
         return true
     }
