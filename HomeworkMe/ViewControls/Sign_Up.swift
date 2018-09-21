@@ -17,9 +17,10 @@ class Sign_Up: UIViewController {
     @IBOutlet weak var lNameTxt: UITextField!
     @IBOutlet weak var passwordTxt: UITextField!
     @IBOutlet weak var conPaswordTxt: UITextField!
+    @IBOutlet weak var phoneNumber: UITextField!
     @IBOutlet weak var emailTxt: UITextField!
     var ref: DatabaseReference!
-    var alert: CommonFunctions!
+    var alert: CommonFunctions! 
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -33,7 +34,7 @@ class Sign_Up: UIViewController {
             let alert = self.alert.alertWithOk(errorMessagTitle: "Password error", errorMessage: "Please make sure your passwords match")
             self.present(alert, animated: true, completion: nil)
         }
-        if fNameTxt.text != nil && lNameTxt.text != nil && passwordTxt.text != nil && conPaswordTxt.text != nil && emailTxt.text != nil && fNameTxt.text != " " && lNameTxt.text != " " && passwordTxt.text != " " && conPaswordTxt.text != " " && emailTxt.text != " " {
+        if fNameTxt.text != nil && phoneNumber.text != nil && lNameTxt.text != nil && passwordTxt.text != nil && conPaswordTxt.text != nil && emailTxt.text != nil && fNameTxt.text != "" && phoneNumber.text != "" && lNameTxt.text != "" && passwordTxt.text != "" && conPaswordTxt.text != "" && emailTxt.text != "" {
             Auth.auth().createUser(withEmail: self.emailTxt.text!, password: self.passwordTxt.text!) { (user, error) in
                 if error != nil {
 //                    let alert = self.alert.alertWithOk(errorMessagTitle: "Something went wrong", errorMessage: (error?.localizedDescription)!)
@@ -45,12 +46,23 @@ class Sign_Up: UIViewController {
                                                    "fName": self.fNameTxt.text ?? " ",
                                                    "lName": self.lNameTxt.text ?? " ",
                                                    "email": self.emailTxt.text ?? " ",
-                                                   "password": self.passwordTxt.text ?? " "]
+                                                   "password": self.passwordTxt.text ?? " ",
+                                                   "phoneNumber": self.phoneNumber.text ?? ""]
                     
                     self.ref.child("Students").child(user.user.uid).setValue(userInfo)
-                    
-                    let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "EditBio") 
-                    self.present(vc, animated: true, completion: nil)
+                    StripeClient.shared.creatCustomer(email: self.emailTxt.text!, completion: { (res) in
+                        print(res)
+                        do {
+                            guard let json = try JSONSerialization.jsonObject(with: res.data!, options: .mutableContainers) as? JSON else {return}
+                            print("the Json \( json)")
+                            let par = ["customerId": json["id"]] as [String: Any]
+                            self.ref.child("Students").child(user.user.uid).updateChildValues(par)
+                            UserDefaults.standard.set(json["id"], forKey: "customerId")
+                        } catch {
+                            
+                        }
+                    })
+                    self.performSegue(withIdentifier: "registerToProfile", sender: self)
                 }
             }
             
@@ -58,8 +70,15 @@ class Sign_Up: UIViewController {
             // post error message here to fill up all fields
             let alert = self.alert.alertWithOk(errorMessagTitle: "Missing Fields", errorMessage: "Please make sure all fields are filled")
             self.present(alert, animated: true, completion: nil)
+        } 
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "registerToProfile" {
+            let vc = segue.destination as? ProfileVC
+            vc?.classView = true
+            
         }
-        
     }
 }
 

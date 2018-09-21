@@ -19,6 +19,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     @IBOutlet weak var cancelBtn: UIButton!
     @IBOutlet weak var classRoomTableView: UITableView!
     @IBOutlet weak var myClassesTableView: UITableView!
+    @IBOutlet weak var addClassBtn: UIButton!
     /// finish edit school pluggins
     
     // edit account pluggins
@@ -32,9 +33,10 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     @IBOutlet weak var changePicBtn: UIButton!
     @IBOutlet weak var displaySegControBtn: UISegmentedControl!
     @IBOutlet weak var classSearchView: UITableView!
-    @IBOutlet weak var classChoiceBtnView: UIStackView!
     @IBOutlet weak var userName: UILabel!
     @IBOutlet weak var activitySpinner: UIActivityIndicatorView!
+    @IBOutlet weak var schoolInstructionsLabel: UILabel!
+    @IBOutlet weak var editView: UIView!
     
     // finish edit account pluggins
     
@@ -54,11 +56,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     var ref: DatabaseReference!
     var imageChangeCheck = false
     var Id: String?
-    // finish edit school variable
-    
-    // edit account variables
-    
-    // finish edit account variables
+    var classView = Bool()
      
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -66,6 +64,12 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         picker.delegate = self
         let storage = Storage.storage().reference(forURL: "gs://hmwrkme.appspot.com")
         userStorage = storage.child("Students")
+        // Show registration completion
+        if classView {
+            editView.isHidden = false
+        } else {
+            editView.isHidden = true
+        }
         dismissKeyboard()
         ref = Database.database().reference()
         myClassesTableView.estimatedRowHeight = 35
@@ -82,6 +86,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
             profilePic.image = UIImage(data: pictureDat)
         }
         editImage()
+        dismissKeyboard()
     }
  
      
@@ -89,8 +94,8 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         tableViewTitleCounter = 0
         headerTitle = "Select University"
         degreeSubjectBtn.isEnabled = false
-        degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal); degreeSubjectBtn.setTitle("Subject", for: .normal)
-        universityBtn.isEnabled = false ; universityBtn.setTitleColor(UIColor.gray, for: .normal); universityBtn.setTitle("University", for: .normal)
+        degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal); degreeSubjectBtn.setTitle("List Subject", for: .normal)
+        universityBtn.isEnabled = false ; universityBtn.setTitleColor(UIColor.gray, for: .normal); universityBtn.setTitle("List University", for: .normal)
         uni_sub_array = uniArray
         classRoomTableView.reloadData()
         uniBtnOn = true; subBtnOn = false
@@ -122,7 +127,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
             changePicBtn.isHidden = true
             displaySegControBtn.isHidden = true
             classSearchView.isHidden = true
-            classChoiceBtnView.isHidden = true
             userName.isHidden = false
             cancelBtn.isHidden = true
             if imageChangeCheck {
@@ -131,17 +135,18 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
             editAcctView.isHidden = true
             setPersonalInfoChange()
             view.endEditing(true)
+            addClassBtn.isHidden = true
         } else {
             /// second time pressed
             editViewBtn.setTitle("Save", for: .normal)
             changePicBtn.isHidden = false
             displaySegControBtn.isHidden = false
             classSearchView.isHidden = false
-            classChoiceBtnView.isHidden = false
             userName.isHidden = true
             cancelBtn.isHidden = false
             cancelBtn.isHidden = false
             displaySegControBtn.selectedSegmentIndex = 0
+            addClassBtn.isHidden = true
         }
     }
     
@@ -163,7 +168,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         changePicBtn.isHidden = true
         displaySegControBtn.isHidden = true
         classSearchView.isHidden = true
-        classChoiceBtnView.isHidden = true
         userName.isHidden = false
         cancelBtn.isHidden = true
         view.endEditing(true)
@@ -171,17 +175,19 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         editIntChecker = 0
     }
     
-    @IBAction func editPayment(_ sender: Any) {
-        // Setup customer context
-//        let customerContext = STPCustomerContext(keyProvider: MyKeyProvider().shared())
-//
-//        // Setup payment methods view controller
-//        let paymentMethodsViewController = STPPaymentMethodsViewController(configuration: STPPaymentConfiguration.shared(), theme: STPTheme.default(), customerContext: customerContext, delegate: self)
-//
-//        // Present payment methods view controller
-//        let navigationController = UINavigationController(rootViewController: paymentMethodsViewController)
-//        present(navigationController, animated: true)
+    @IBAction func addClassPrsd(_ sender: Any) {
+        editView.isHidden = false
     }
+    
+    @IBAction func nextPressed(_ sender: Any) {
+        editView.isHidden = true
+    }
+    
+    
+    @IBAction func addPaymentMethod(_ sender: Any) {
+        addCard()
+    }
+    
     
     func logout() {
         if Auth.auth().currentUser != nil {
@@ -225,12 +231,27 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         }
     }
     
+    func addCard() {
+        let addCardViewController = STPAddCardViewController()
+        addCardViewController.delegate = self
+        
+        // Present add card view controller
+        let navigationController = UINavigationController(rootViewController: addCardViewController)
+        present(navigationController, animated: true)
+    }
+    
     func editImage(){
         profilePic.layer.borderWidth = 1
         profilePic.layer.masksToBounds = false
         profilePic.layer.borderColor = UIColor.black.cgColor
         profilePic.layer.cornerRadius = profilePic.frame.height/2
         profilePic.clipsToBounds = true
+    }
+    
+    func dismissKeyboard() {
+        let tap = UITapGestureRecognizer(target: self.view, action: #selector(UIView.endEditing(_:)))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
     }
     
     func deletValue(indexPathRow:Int) {
@@ -313,23 +334,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         })
     }
     
-    func fetchCustomKey() {
-        let ref = Database.database().reference()
-        ref.child("stripe_customers").queryOrderedByKey().observeSingleEvent(of: .value, with: { response in
-            if response.value is NSNull {
-                /// dont do anything
-            } else {
-                //                self.uni_sub_array.removeAll()
-                let universities = response.value as! [String:AnyObject]
-                for (x,y) in universities {
-                    if x == self.Id {
-                        
-                        UserDefaults.standard.set(y["customer_id"], forKey: "customerId")
-                    }
-                }
-            }
-        })
-    }
     
     func fetchMyClassKey() {
         let ref = Database.database().reference()
@@ -365,8 +369,12 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
                 if let id = myclass["uid"] as? String {
                     UserDefaults.standard.set(id, forKey: "userId")
                     self.Id = id
-                    self.fetchCustomKey()
+                } //customerID
+                
+                if let customer = myclass["customerId"] as? String {
+                    UserDefaults.standard.set(customer, forKey: "customerId")
                 }
+                
                 self.userName.text = name
                 if let pictureURl = myclass["pictureUrl"] as? String {
                     UserDefaults.standard.set(pictureURl, forKey: "pictureUrl")
@@ -591,5 +599,30 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
         } else {
             return ""
         }
+    }
+}
+
+extension ProfileVC: STPAddCardViewControllerDelegate {
+    
+    func addCardViewControllerDidCancel(_ addCardViewController: STPAddCardViewController) {
+        dismiss(animated: true)
+    }
+    
+    func addCardViewController(_ addCardViewController: STPAddCardViewController, didCreateToken token: STPToken, completion: @escaping STPErrorBlock) {
+        
+        
+        StripeClient.shared.addCard(with: token, amount: 000) { result in
+            switch result {
+            // 1
+            case .success:
+                completion(nil)
+                
+                self.dismiss(animated: true)
+            // 2
+            case .failure(let error):
+                completion(error)
+            }
+        }
+        
     }
 }

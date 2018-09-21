@@ -39,6 +39,7 @@ class PostView: UIViewController {
     lazy var functions2 = Functions.functions()
     let settingsVC = SettingsViewController()
     
+    
     // stripe payment setup
      
 
@@ -48,6 +49,9 @@ class PostView: UIViewController {
         userStorage = storage.child("Students")
         fetchBio()
         editImage()
+        
+       
+       
     }
  
     @IBAction func backPrsd(_ sender: Any) {
@@ -118,28 +122,7 @@ class PostView: UIViewController {
     
     @IBAction func purchesPrsd(_ sender: Any) {
         addCard()
-//        let checkoutViewController = CheckoutViewController(product: "product",
-//                                                            price: 100,
-//                                                            settings: self.settingsVC.settings)
-//        self.navigationController?.pushViewController(checkoutViewController, animated: true)
-        /*
-        if !selectSchedule.isEmpty {
-            if selectSchedule.count > 0 {
-                let alert2 = UIAlertController(title: "Pay with", message: "", preferredStyle: .alert)
-                let square = UIAlertAction(title: "Cash", style: .default) { (response) in
-                    self.addCard()
-                }
-                alert2.addAction(square)
-                present(alert2, animated: true, completion: nil)
-                
-            }
-        } else {
-            let alert = UIAlertController(title: "Missing Schedule", message: "Please select a date to meet up", preferredStyle: .alert)
-            let ok = UIAlertAction(title: "Ok", style: .default, handler: nil)
-            alert.addAction(ok)
-            present(alert, animated: true , completion: nil)
-        }
-         */
+  
     }
     
     @IBAction func disLikers(_ sender: Any) {
