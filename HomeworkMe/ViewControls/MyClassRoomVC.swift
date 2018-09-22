@@ -211,7 +211,7 @@ class MyClassRoomVC: UIViewController {
                               "price": self.price,
                               "schedule": self.schedules,
                               "studentInClass":self.inClassSwitch.isOn,
-                              "postPic": picUrl ] as [String : Any]
+                              "postPic": picUrl ] as? [String : Any]
             let postParam = [postKey : parameters]
             let postParam2 = [postKey:postKey]
             ref.child("Posts").updateChildValues(postParam)

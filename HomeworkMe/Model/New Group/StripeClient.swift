@@ -103,6 +103,26 @@ final class StripeClient {
         }
     }
     
+    func creatCustomer(email:String, completion: @escaping (DataResponse<String>) -> Void) {
+        // 1
+        let url = baseURL.appendingPathComponent("createCustomer")
+        // 2
+        let params: [String: Any] = [ 
+            "email" : email 
+        ]
+        // 3
+        Alamofire.request(url, method: .post, parameters: params)
+            .validate(statusCode: 200..<300)
+            .responseString { response in
+                switch response.result {
+                case .success:
+                    completion(response)
+                case .failure(let error):
+                    completion(response)
+                }
+        }
+    }
+    
     func createCustomerKey(withAPIVersion apiVersion: String, completion: @escaping STPJSONResponseCompletionBlock) {
         let url = self.baseURL.appendingPathComponent("ephemeral_keys")
         let customerId = UserDefaults.standard.string(forKey: "customerId")

@@ -11,14 +11,17 @@ import Firebase
 import FirebaseDatabase
 import FirebaseStorage
 import Stripe
+import GooglePlaces
+import GoogleSignIn
 
-class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate  {
+class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, GIDSignInUIDelegate  {
     //// Edit School pluggings
     @IBOutlet weak var universityBtn: UIButton!
     @IBOutlet weak var degreeSubjectBtn: UIButton!
     @IBOutlet weak var cancelBtn: UIButton!
     @IBOutlet weak var classRoomTableView: UITableView!
     @IBOutlet weak var myClassesTableView: UITableView!
+    @IBOutlet weak var addClassBtn: UIButton!
     /// finish edit school pluggins
     
     // edit account pluggins
@@ -26,16 +29,31 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     @IBOutlet weak var fNameTxt: UITextField!
     @IBOutlet weak var lNameTxt: UITextField!
     @IBOutlet weak var emailTxt: UITextField!
+    @IBOutlet weak var schoolEmail: UITextField!
+    @IBOutlet weak var major: UITextField!
+    @IBOutlet weak var classification: UITextField!
     @IBOutlet weak var phoneNumberTxt: UITextField!
     @IBOutlet weak var profilePic: UIImageView!
     @IBOutlet weak var editViewBtn: UIButton!
     @IBOutlet weak var changePicBtn: UIButton!
     @IBOutlet weak var displaySegControBtn: UISegmentedControl!
     @IBOutlet weak var classSearchView: UITableView!
-    @IBOutlet weak var classChoiceBtnView: UIStackView!
     @IBOutlet weak var userName: UILabel!
     @IBOutlet weak var activitySpinner: UIActivityIndicatorView!
+    @IBOutlet weak var schoolInstructionsLabel: UILabel!
+    @IBOutlet weak var editView: UIView!
+    @IBOutlet weak var scheduleTableView: UITableView!
+    @IBOutlet weak var tutorEdit: UIView!
+    @IBOutlet weak var addScheduleStackView: UIStackView!
+    @IBOutlet weak var addPlaceStackView: UIStackView!
+    // date picker
+    @IBOutlet weak var dayPicker: UIPickerView!
+    @IBOutlet weak var hourPicker: UIPickerView!
+    @IBOutlet weak var minPicker: UIPickerView!
+    @IBOutlet weak var amPickr: UIPickerView!
     
+    @IBOutlet weak var meetUpLocationsTable: UITableView!
+    @IBOutlet weak var tutorEditLbl: UILabel!
     // finish edit account pluggins
     
     // edit school var
@@ -54,18 +72,32 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     var ref: DatabaseReference!
     var imageChangeCheck = false
     var Id: String?
-    // finish edit school variable
+    var classView = Bool()
+    var schedules = [String]()
+    var schedule = String()
+    var dayArray = [String](); var hourArr = [String](); var minArr = [String](); var amArr = [String]()
+    var chosenLocationsArr = [String]() ; var day = "Sunday"; var hour = "12"; var min = "00"; var am = "Am"
+    var place = Place()
+    var placeArr = [Place](); var placeesDict = [String:[String]]()
     
-    // edit account variables
-    
-    // finish edit account variables
-     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        GIDSignIn.sharedInstance().uiDelegate = self // google sign in
         picker.delegate = self
         let storage = Storage.storage().reference(forURL: "gs://hmwrkme.appspot.com")
         userStorage = storage.child("Students")
+        
+        // Show registration completion
+        if classView {
+            editView.isHidden = false
+        } else {
+            editView.isHidden = true
+        }
+        // setup date picker
+        let currentDate: Date = Date()
+        tutorEdit.isHidden = true
+        setUpSchdArr()
         dismissKeyboard()
         ref = Database.database().reference()
         myClassesTableView.estimatedRowHeight = 35
@@ -82,6 +114,8 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
             profilePic.image = UIImage(data: pictureDat)
         }
         editImage()
+        dismissKeyboard()
+        
     }
  
      
@@ -89,8 +123,8 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         tableViewTitleCounter = 0
         headerTitle = "Select University"
         degreeSubjectBtn.isEnabled = false
-        degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal); degreeSubjectBtn.setTitle("Subject", for: .normal)
-        universityBtn.isEnabled = false ; universityBtn.setTitleColor(UIColor.gray, for: .normal); universityBtn.setTitle("University", for: .normal)
+        degreeSubjectBtn.setTitleColor(UIColor.gray, for: .normal); degreeSubjectBtn.setTitle("List Subject", for: .normal)
+        universityBtn.isEnabled = false ; universityBtn.setTitleColor(UIColor.gray, for: .normal); universityBtn.setTitle("List University", for: .normal)
         uni_sub_array = uniArray
         classRoomTableView.reloadData()
         uniBtnOn = true; subBtnOn = false
@@ -122,7 +156,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
             changePicBtn.isHidden = true
             displaySegControBtn.isHidden = true
             classSearchView.isHidden = true
-            classChoiceBtnView.isHidden = true
             userName.isHidden = false
             cancelBtn.isHidden = true
             if imageChangeCheck {
@@ -131,17 +164,18 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
             editAcctView.isHidden = true
             setPersonalInfoChange()
             view.endEditing(true)
+            addClassBtn.isHidden = true
         } else {
             /// second time pressed
             editViewBtn.setTitle("Save", for: .normal)
             changePicBtn.isHidden = false
             displaySegControBtn.isHidden = false
             classSearchView.isHidden = false
-            classChoiceBtnView.isHidden = false
             userName.isHidden = true
             cancelBtn.isHidden = false
             cancelBtn.isHidden = false
             displaySegControBtn.selectedSegmentIndex = 0
+            addClassBtn.isHidden = true
         }
     }
     
@@ -163,7 +197,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         changePicBtn.isHidden = true
         displaySegControBtn.isHidden = true
         classSearchView.isHidden = true
-        classChoiceBtnView.isHidden = true
         userName.isHidden = false
         cancelBtn.isHidden = true
         view.endEditing(true)
@@ -171,16 +204,74 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         editIntChecker = 0
     }
     
-    @IBAction func editPayment(_ sender: Any) {
-        // Setup customer context
-//        let customerContext = STPCustomerContext(keyProvider: MyKeyProvider().shared())
-//
-//        // Setup payment methods view controller
-//        let paymentMethodsViewController = STPPaymentMethodsViewController(configuration: STPPaymentConfiguration.shared(), theme: STPTheme.default(), customerContext: customerContext, delegate: self)
-//
-//        // Present payment methods view controller
-//        let navigationController = UINavigationController(rootViewController: paymentMethodsViewController)
-//        present(navigationController, animated: true)
+    @IBAction func addClassPrsd(_ sender: Any) {
+        editView.isHidden = false
+    }
+    
+    @IBAction func tutorRegistration(_ sender: Any) {
+        editView.isHidden = true
+        tutorEdit.isHidden = false
+    }
+    
+    // Done button for editView pressed
+    @IBAction func signUpEditDone(_ sender: Any) {
+        editView.isHidden = true
+        tutorEdit.isHidden = true
+    }
+    
+    @IBAction func backToEditView(_ sender: Any) {
+        editView.isHidden = false
+        tutorEdit.isHidden = true
+    }
+    
+    @IBAction func nextToAddLoc(_ sender: Any) {
+        tutorEditLbl.text = "Meet up locations"
+        addScheduleStackView.isHidden = true
+        addPlaceStackView.isHidden = false
+    }
+    
+    @IBAction func backToSchdl(_ sender: Any) {
+        tutorEditLbl.text = "My Weekly Schedule"
+        addPlaceStackView.isHidden = true
+        addScheduleStackView.isHidden = false
+    }
+    
+    @IBAction func saveTutor(_ sender: Any) {
+        
+        if major.text != nil && classification.text != nil && schoolEmail.text != nil {
+            let parameters = [
+                "schedule": self.schedules,
+                "meetUpLocations":placeesDict,
+                "major":major.text ?? "",
+                "classification":classification.text ?? "",
+                "schoolEmail":schoolEmail.text ?? ""] as [String : Any]
+            
+            
+            ref.child("Students").child((Auth.auth().currentUser?.uid)!).child("TutorProfile").updateChildValues(parameters)
+            ref.child("Tutors").child((Auth.auth().currentUser?.uid)!).setValue(parameters)
+        } else {
+            // display warning
+        }
+        
+        tutorEdit.isHidden = true
+    }
+    
+    
+    @IBAction func addPaymentMethod(_ sender: Any) {
+        addCard()
+    }
+    
+    @IBAction func setSchedulePrsd(_ sender: Any) {
+        schedules.append(schedule)
+        scheduleTableView.reloadData()
+        schedule.removeAll()
+    }
+    
+    
+    @IBAction func autocompleteClicked(_ sender: UIButton) {
+        let autocompleteController = GMSAutocompleteViewController()
+        autocompleteController.delegate = self
+        present(autocompleteController, animated: true, completion: nil)
     }
     
     func logout() {
@@ -191,7 +282,15 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
             }
         }
     }
-        
+    
+    func setUpSchdArr(){
+        schedule = "Sundays 12:00 am"
+        dayArray = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+        hourArr = ["12","1","2","3","4","5","6","7","8","9","10","11"]
+        minArr = ["00","01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50","51","52","53","54","55","56","57","58","59"]
+        amArr = ["Am","Pm"]
+    }
+    
     func dismissKeyboard() { 
         let tap = UITapGestureRecognizer(target: self.view, action: Selector("endEditing:"))
         tap.cancelsTouchesInView = false
@@ -225,6 +324,15 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         }
     }
     
+    func addCard() {
+        let addCardViewController = STPAddCardViewController()
+        addCardViewController.delegate = self
+        
+        // Present add card view controller
+        let navigationController = UINavigationController(rootViewController: addCardViewController)
+        present(navigationController, animated: true)
+    }
+    
     func editImage(){
         profilePic.layer.borderWidth = 1
         profilePic.layer.masksToBounds = false
@@ -232,6 +340,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         profilePic.layer.cornerRadius = profilePic.frame.height/2
         profilePic.clipsToBounds = true
     }
+  
     
     func deletValue(indexPathRow:Int) {
         let ref = Database.database().reference()
@@ -313,23 +422,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         })
     }
     
-    func fetchCustomKey() {
-        let ref = Database.database().reference()
-        ref.child("stripe_customers").queryOrderedByKey().observeSingleEvent(of: .value, with: { response in
-            if response.value is NSNull {
-                /// dont do anything
-            } else {
-                //                self.uni_sub_array.removeAll()
-                let universities = response.value as! [String:AnyObject]
-                for (x,y) in universities {
-                    if x == self.Id {
-                        
-                        UserDefaults.standard.set(y["customer_id"], forKey: "customerId")
-                    }
-                }
-            }
-        })
-    }
     
     func fetchMyClassKey() {
         let ref = Database.database().reference()
@@ -365,8 +457,12 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
                 if let id = myclass["uid"] as? String {
                     UserDefaults.standard.set(id, forKey: "userId")
                     self.Id = id
-                    self.fetchCustomKey()
+                } //customerID
+                
+                if let customer = myclass["customerId"] as? String {
+                    UserDefaults.standard.set(customer, forKey: "customerId")
                 }
+                
                 self.userName.text = name
                 if let pictureURl = myclass["pictureUrl"] as? String {
                     UserDefaults.standard.set(pictureURl, forKey: "pictureUrl")
@@ -534,6 +630,20 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
                 myClassesTableView.deleteRows(at: [indexPath], with: .fade)
             }
         }
+        
+        if tableView == scheduleTableView {
+            if (editingStyle == UITableViewCellEditingStyle.delete) {
+                schedules.remove(at: indexPath.row)
+                scheduleTableView.deleteRows(at: [indexPath], with: .fade)
+            }
+        }
+        
+        if tableView == meetUpLocationsTable {
+            if (editingStyle == UITableViewCellEditingStyle.delete) {
+                placeArr.remove(at: indexPath.row)
+                meetUpLocationsTable.deleteRows(at: [indexPath], with: .fade)
+            }
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -553,7 +663,16 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             cell.textLabel!.text = myClassesArr[indexPath.row].title
             cell.textLabel?.numberOfLines = 0
             return cell
-        } else {
+        } else if tableView == scheduleTableView {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "scheduleCell", for: indexPath)
+            cell.textLabel!.text = schedules[indexPath.row]
+            return cell
+        } else if tableView == meetUpLocationsTable {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "meetUpLocation", for: indexPath)
+            cell.textLabel!.text = placeArr[indexPath.row].name
+            return cell
+        }
+        else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "myClasses", for: indexPath)
             cell.textLabel!.text = myClassesArr[indexPath.row].title
             return cell
@@ -568,6 +687,10 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             return uni_sub_array.count
         } else if tableView == myClassesTableView {
             return myClassesArr.count
+        } else if tableView == scheduleTableView {
+            return schedules.count
+        } else if tableView == meetUpLocationsTable {
+            return placeArr.count
         } else {
             return 0
         }
@@ -584,12 +707,139 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             if tableViewTitleCounter == 2 {
                 return headerTitle
             }
-           
+        }
+        if tableView == scheduleTableView {
+            return "My weekly schedul"
+        }
+        if tableView == meetUpLocationsTable {
+            return "Meet up locations"
         }
         if tableView == myClassesTableView {
             return "My Classes"
         } else {
             return ""
+        }
+    }
+    
+    
+}
+
+extension ProfileVC: STPAddCardViewControllerDelegate {
+    
+    func addCardViewControllerDidCancel(_ addCardViewController: STPAddCardViewController) {
+        dismiss(animated: true)
+    }
+    
+    func addCardViewController(_ addCardViewController: STPAddCardViewController, didCreateToken token: STPToken, completion: @escaping STPErrorBlock) {
+        
+        
+        StripeClient.shared.addCard(with: token, amount: 000) { result in
+            switch result {
+            // 1
+            case .success:
+                completion(nil)
+                
+                self.dismiss(animated: true)
+            // 2
+            case .failure(let error):
+                completion(error)
+            }
+        }
+        
+    }
+}
+
+extension ProfileVC: GMSAutocompleteViewControllerDelegate {
+    // Handle the user's selection.
+    func viewController(_ viewController: GMSAutocompleteViewController, didAutocompleteWith place: GMSPlace) {
+        
+        self.place.name = place.name
+        self.place.coordinates = "\(place.coordinate)"
+        self.placeArr.append(self.place)
+        let arr = ["\(place.coordinate.latitude) * \(place.coordinate.longitude)", place.name]
+        placeesDict["\(place.placeID)"] = arr
+        meetUpLocationsTable.reloadData()
+        dismiss(animated: true, completion: nil)
+    }
+    
+    func viewController(_ viewController: GMSAutocompleteViewController, didFailAutocompleteWithError error: Error) {
+        // TODO: handle the error.
+        print("Error: ", error.localizedDescription)
+    }
+    
+    // User canceled the operation.
+    func wasCancelled(_ viewController: GMSAutocompleteViewController) {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    // Turn the network activity indicator on and off again.
+    func didRequestAutocompletePredictions(_ viewController: GMSAutocompleteViewController) {
+        UIApplication.shared.isNetworkActivityIndicatorVisible = true
+    }
+    
+    func didUpdateAutocompletePredictions(_ viewController: GMSAutocompleteViewController) {
+        UIApplication.shared.isNetworkActivityIndicatorVisible = false
+    }
+
+}
+
+
+extension ProfileVC:  UIPickerViewDelegate, UIPickerViewDataSource {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        if pickerView == dayPicker {
+            return 1
+        } else if pickerView == hourPicker {
+            return 1
+        } else if pickerView == minPicker {
+            return 1
+        } else if pickerView == amPickr {
+            return 1
+        } else {
+            return 1
+        }
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        if pickerView == dayPicker {
+            return dayArray.count
+        } else if pickerView == hourPicker {
+            return hourArr.count
+        } else if pickerView == minPicker {
+            return minArr.count
+        } else if pickerView == amPickr {
+            return amArr.count
+        } else {
+            return 0
+        }
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        if pickerView == dayPicker {
+            return dayArray[row]
+        } else if pickerView == hourPicker {
+            return hourArr[row]
+        } else if pickerView == minPicker {
+            return minArr[row]
+        } else if pickerView == amPickr {
+            return amArr[row]
+        } else {
+            return ""
+        }
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        if pickerView == dayPicker {
+            day = dayArray[row]
+            schedule = (day+"s "+hour+":"+min+" "+am)
+        } else if pickerView == hourPicker {
+            hour = hourArr[row]
+            schedule = (day+"s "+hour+":"+min+" "+am)
+        } else if pickerView == minPicker {
+            min = minArr[row]
+            schedule = (day+"s "+hour+":"+min+" "+am)
+        } else if pickerView == amPickr {
+            am = amArr[row]
+            schedule = (day+"s "+hour+":"+min+" "+am)
         }
     }
 }

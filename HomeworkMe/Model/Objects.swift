@@ -61,6 +61,11 @@ class Post {
     var noteDict = [String:String]()
 }
 
+struct Place {
+    var name: String?
+    var coordinates: String?
+}
+
 
 struct File {
     var title: String?

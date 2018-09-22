@@ -28,6 +28,8 @@
 
 import Foundation
 
+typealias JSON = [String: Any]
+
 enum Constants {
   static let publishableKey = "pk_live_zElKyvWz0R0pJiEmf42HAcii"
   static let baseURLString = "https://fierce-gorge-75882.herokuapp.com/"
