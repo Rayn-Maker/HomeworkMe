@@ -151,7 +151,7 @@
                                 </connections>
                             </button>
                             <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" spacing="20" translatesAutoresizingMaskIntoConstraints="NO" id="czl-wX-TfB">
-                                <rect key="frame" x="46" y="253" width="284" height="96"/>
+                                <rect key="frame" x="46" y="253" width="284" height="154"/>
                                 <subviews>
                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tbe-4A-AfH">
                                         <rect key="frame" x="0.0" y="0.0" width="284" height="38"/>
@@ -162,12 +162,25 @@
                                         </constraints>
                                         <fontDescription key="fontDescription" name="TimesNewRomanPS-BoldMT" family="Times New Roman" pointSize="20"/>
                                         <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-                                        <state key="normal" title="Continue with Facebook">
+                                        <state key="normal" title="Continue with Google">
                                             <color key="titleColor" red="0.62330411845827527" green="0.34875479748587201" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </state>
                                     </button>
-                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="rQQ-qN-xAB">
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="qj9-xi-X0q">
                                         <rect key="frame" x="0.0" y="58" width="284" height="38"/>
+                                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="284" id="2cc-f9-7fb"/>
+                                            <constraint firstAttribute="height" constant="38" id="thx-P0-KuB"/>
+                                        </constraints>
+                                        <fontDescription key="fontDescription" name="TimesNewRomanPS-BoldMT" family="Times New Roman" pointSize="20"/>
+                                        <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                        <state key="normal" title="Continue with Facebook">
+                                            <color key="titleColor" red="0.6233041185" green="0.34875479749999999" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        </state>
+                                    </button>
+                                    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="rQQ-qN-xAB">
+                                        <rect key="frame" x="0.0" y="116" width="284" height="38"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="284" id="Kie-ot-yTO"/>
                                             <constraint firstAttribute="height" constant="38" id="hpQ-qt-cgo"/>
@@ -191,6 +204,11 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HQ9-xM-VEQ" customClass="GIDSignInButton">
+                                <rect key="frame" x="68" y="415" width="250" height="50"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" red="0.62330411845827527" green="0.34875479748587201" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
@@ -198,7 +216,6 @@
                             <constraint firstItem="czl-wX-TfB" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="46" id="2te-wW-mku"/>
                             <constraint firstItem="oRE-EC-ogd" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="104.5" id="7Jh-wO-zv0"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="czl-wX-TfB" secondAttribute="trailing" constant="45" id="QbN-nx-ciU"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="czl-wX-TfB" secondAttribute="bottom" constant="318" id="ZVd-eN-Csi"/>
                             <constraint firstItem="oRE-EC-ogd" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="b5h-3v-bvG"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="oRE-EC-ogd" secondAttribute="trailing" constant="104" id="dRI-Se-pGm"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="IZQ-CV-Y6o" secondAttribute="trailing" constant="16" id="eGa-KZ-zW2"/>
@@ -207,6 +224,9 @@
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
+                    <connections>
+                        <outlet property="faceBookSignIn" destination="qj9-xi-X0q" id="hdG-yi-qzB"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>

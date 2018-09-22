@@ -12,8 +12,9 @@ import FirebaseDatabase
 import FirebaseStorage
 import Stripe
 import GooglePlaces
+import GoogleSignIn
 
-class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate  {
+class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, GIDSignInUIDelegate  {
     //// Edit School pluggings
     @IBOutlet weak var universityBtn: UIButton!
     @IBOutlet weak var degreeSubjectBtn: UIButton!
@@ -82,6 +83,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        GIDSignIn.sharedInstance().uiDelegate = self // google sign in
         picker.delegate = self
         let storage = Storage.storage().reference(forURL: "gs://hmwrkme.appspot.com")
         userStorage = storage.child("Students")
