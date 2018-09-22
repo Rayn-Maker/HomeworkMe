@@ -44,6 +44,7 @@ class Sign_Up: UIViewController {
                 if let user = user {
                     let userInfo: [String: Any] = ["uid": user.user.uid,
                                                    "fName": self.fNameTxt.text ?? " ",
+                                                   "full_name": "\(self.fNameTxt.text ?? " ") \(self.lNameTxt.text ?? " ")" , 
                                                    "lName": self.lNameTxt.text ?? " ",
                                                    "email": self.emailTxt.text ?? " ",
                                                    "password": self.passwordTxt.text ?? " ",
@@ -77,7 +78,7 @@ class Sign_Up: UIViewController {
         if segue.identifier == "registerToProfile" {
             let vc = segue.destination as? ProfileVC
             vc?.classView = true
-            
+            vc?.phoneNumberTxt.text = phoneNumber.text
         }
     }
 }

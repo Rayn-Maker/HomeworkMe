@@ -51,6 +51,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     @IBOutlet weak var hourPicker: UIPickerView!
     @IBOutlet weak var minPicker: UIPickerView!
     @IBOutlet weak var amPickr: UIPickerView!
+    @IBOutlet weak var phoneNumber: UITextField!
     
     @IBOutlet weak var meetUpLocationsTable: UITableView!
     @IBOutlet weak var tutorEditLbl: UILabel!
@@ -238,16 +239,29 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     
     @IBAction func saveTutor(_ sender: Any) {
         
-        if major.text != nil && classification.text != nil && schoolEmail.text != nil {
+        if major.text != nil && classification.text != nil && schoolEmail.text != nil && phoneNumberTxt.text != nil {
             let parameters = [
                 "schedule": self.schedules,
                 "meetUpLocations":placeesDict,
-                "major":major.text ?? "",
+                "major": major.text ?? "",
                 "classification":classification.text ?? "",
-                "schoolEmail":schoolEmail.text ?? ""] as [String : Any]
+                "schoolEmail":schoolEmail.text ?? "",
+                "tutor": userName.text ?? ""] as [String : Any]
             
+            let para = ["phoneNumber":phoneNumber.text ?? ""] as [String : Any]
             
-            ref.child("Students").child((Auth.auth().currentUser?.uid)!).child("TutorProfile").updateChildValues(parameters)
+            ref.child("Students").child(Auth.auth().currentUser?.uid ?? "").updateChildValues(para) { (err, resp) in
+                if err != nil {
+                    
+                }
+            }
+            ref.child("Students").child((Auth.auth().currentUser?.uid)!).child("TutorProfile").updateChildValues(parameters) { (err, resp) in
+                if err != nil {
+                    
+                } else {
+                    
+                }
+            }
             ref.child("Tutors").child((Auth.auth().currentUser?.uid)!).setValue(parameters)
         } else {
             // display warning
@@ -278,6 +292,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         if Auth.auth().currentUser != nil {
             do {
                 try? Auth.auth().signOut()
+                 GIDSignIn.sharedInstance().signOut()
             } catch  {
             }
         }
@@ -435,6 +450,9 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
                 var name = " "
                 if let dict = myclass["Classes"] as? [String : AnyObject] {
                     self.fetchMyClass(dictCheck: dict)
+                }
+                if let fname = myclass["full_name"] as? String {
+                    UserDefaults.standard.set(fname, forKey: "full_name")
                 }
                 if let fname = myclass["fName"] as? String {
                     UserDefaults.standard.set(fname, forKey: "fName")
