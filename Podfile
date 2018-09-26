@@ -19,7 +19,6 @@ target 'HomeworkMe' do
 	pod 'GooglePlaces'
   	pod 'GooglePlacePicker'
   	pod 'GoogleMaps'
-	pod 'GooglePlacesAPI'
 	pod 'GoogleSignIn'
 	pod 'FacebookLogin'
 	pod 'FacebookCore' 
