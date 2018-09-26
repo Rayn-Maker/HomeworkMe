@@ -31,10 +31,8 @@ class Sign_Up: UIViewController {
     @IBAction func registerPrsd(_ sender: Any) {
         ref = Database.database().reference()
         if passwordTxt.text != conPaswordTxt.text {
-            let alert = self.alert.alertWithOk(errorMessagTitle: "Password error", errorMessage: "Please make sure your passwords match")
-            self.present(alert, animated: true, completion: nil)
-        }
-        if fNameTxt.text != nil && phoneNumber.text != nil && lNameTxt.text != nil && passwordTxt.text != nil && conPaswordTxt.text != nil && emailTxt.text != nil && fNameTxt.text != "" && phoneNumber.text != "" && lNameTxt.text != "" && passwordTxt.text != "" && conPaswordTxt.text != "" && emailTxt.text != "" {
+            
+        } else if fNameTxt.text != nil && phoneNumber.text != nil && lNameTxt.text != nil && passwordTxt.text != nil && conPaswordTxt.text != nil && emailTxt.text != nil && fNameTxt.text != "" && phoneNumber.text != "" && lNameTxt.text != "" && passwordTxt.text != "" && conPaswordTxt.text != "" && emailTxt.text != "" {
             Auth.auth().createUser(withEmail: self.emailTxt.text!, password: self.passwordTxt.text!) { (user, error) in
                 if error != nil {
 //                    let alert = self.alert.alertWithOk(errorMessagTitle: "Something went wrong", errorMessage: (error?.localizedDescription)!)
@@ -78,7 +76,7 @@ class Sign_Up: UIViewController {
         if segue.identifier == "registerToProfile" {
             let vc = segue.destination as? ProfileVC
             vc?.classView = true
-            vc?.phoneNumberTxt.text = phoneNumber.text
+            vc?.phoneNumberString = phoneNumber.text ?? ""
         }
     }
 }

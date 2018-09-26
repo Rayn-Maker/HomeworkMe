@@ -25,34 +25,25 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     /// finish edit school pluggins
     
     // edit account pluggins
-    @IBOutlet weak var editAcctView: UIView!
-    @IBOutlet weak var fNameTxt: UITextField!
-    @IBOutlet weak var lNameTxt: UITextField!
-    @IBOutlet weak var emailTxt: UITextField!
+
     @IBOutlet weak var schoolEmail: UITextField!
     @IBOutlet weak var major: UITextField!
     @IBOutlet weak var classification: UITextField!
-    @IBOutlet weak var phoneNumberTxt: UITextField!
     @IBOutlet weak var profilePic: UIImageView!
     @IBOutlet weak var editViewBtn: UIButton!
     @IBOutlet weak var changePicBtn: UIButton!
-    @IBOutlet weak var displaySegControBtn: UISegmentedControl!
     @IBOutlet weak var classSearchView: UITableView!
     @IBOutlet weak var userName: UILabel!
     @IBOutlet weak var activitySpinner: UIActivityIndicatorView!
     @IBOutlet weak var schoolInstructionsLabel: UILabel!
     @IBOutlet weak var editView: UIView!
-    @IBOutlet weak var scheduleTableView: UITableView!
     @IBOutlet weak var tutorEdit: UIView!
-    @IBOutlet weak var addScheduleStackView: UIStackView!
-    @IBOutlet weak var addPlaceStackView: UIStackView!
-    // date picker
-    @IBOutlet weak var dayPicker: UIPickerView!
-    @IBOutlet weak var hourPicker: UIPickerView!
-    @IBOutlet weak var minPicker: UIPickerView!
-    @IBOutlet weak var amPickr: UIPickerView!
+    @IBOutlet weak var addPlaceStackView: UIStackView! 
     @IBOutlet weak var phoneNumber: UITextField!
-    
+    @IBOutlet weak var goLiveSwitch: UISwitch!
+
+    @IBOutlet weak var goLiveLable: UILabel!
+    @IBOutlet weak var goliveView: UIStackView!
     @IBOutlet weak var meetUpLocationsTable: UITableView!
     @IBOutlet weak var tutorEditLbl: UILabel!
     // finish edit account pluggins
@@ -80,6 +71,9 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     var chosenLocationsArr = [String]() ; var day = "Sunday"; var hour = "12"; var min = "00"; var am = "Am"
     var place = Place()
     var placeArr = [Place](); var placeesDict = [String:[String]]()
+    var isTutor = false
+    var student = Student()
+    var phoneNumberString = String()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -95,7 +89,26 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         } else {
             editView.isHidden = true
         }
+        
+        if student.tutorStatus == "live" {
+            goLiveSwitch.isOn = true
+        } else if student.tutorStatus == "off" {
+             goLiveSwitch.isOn = false
+        }
+        if student.tutorApproved ?? false  {
+            goliveView.isHidden = true
+        } else {
+            goliveView.isHidden = false
+        }
+        
+        if goLiveSwitch.isOn {
+            goLiveLable.text = "I'm Live!!!"
+        } else {
+            goLiveLable.text = "Go Live!!"
+        }
+        
         // setup date picker
+        phoneNumber.text = phoneNumberString
         let currentDate: Date = Date()
         tutorEdit.isHidden = true
         setUpSchdArr()
@@ -140,14 +153,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         uniBtnOn = false; subBtnOn = true
     }
     
-    @IBAction func displayViewChanger(_ sender: UISegmentedControl) {
-        if sender.selectedSegmentIndex == 0{
-            editAcctView.isHidden = true
-        }
-        if sender.selectedSegmentIndex == 1{
-            editAcctView.isHidden = false
-        }
-    }
     
     @IBAction func editViewPrsd(_ sender: Any) {
         // first time pressed
@@ -155,28 +160,27 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         if editIntChecker % 2 == 0 {
             editViewBtn.setTitle("Edit", for: .normal)
             changePicBtn.isHidden = true
-            displaySegControBtn.isHidden = true
             classSearchView.isHidden = true
             userName.isHidden = false
+            addClassBtn.isHidden = true
+            goliveView.isHidden = false
             cancelBtn.isHidden = true
             if imageChangeCheck {
                 saveImage()
             }
-            editAcctView.isHidden = true
-            setPersonalInfoChange()
             view.endEditing(true)
-            addClassBtn.isHidden = true
+//            addClassBtn.isHidden = true
         } else {
             /// second time pressed
             editViewBtn.setTitle("Save", for: .normal)
             changePicBtn.isHidden = false
-            displaySegControBtn.isHidden = false
+            addClassBtn.isHidden = false
             classSearchView.isHidden = false
             userName.isHidden = true
             cancelBtn.isHidden = false
             cancelBtn.isHidden = false
-            displaySegControBtn.selectedSegmentIndex = 0
-            addClassBtn.isHidden = true
+            goliveView.isHidden = true
+//            addClassBtn.isHidden = true
         }
     }
     
@@ -196,17 +200,42 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     @IBAction func cancelSavePrsd(_ sender: Any) {
         editViewBtn.setTitle("Edit", for: .normal)
         changePicBtn.isHidden = true
-        displaySegControBtn.isHidden = true
+        addClassBtn.isHidden = true
         classSearchView.isHidden = true
         userName.isHidden = false
         cancelBtn.isHidden = true
+        goliveView.isHidden = false
         view.endEditing(true)
-        editAcctView.isHidden = true
         editIntChecker = 0
     }
     
     @IBAction func addClassPrsd(_ sender: Any) {
         editView.isHidden = false
+    }
+    
+    @IBAction func goLivePrsed(_ sender: Any) {
+    if goLiveSwitch.isOn {
+        goLiveLable.text = "I'm Live"
+        let par = ["status": "live"] as [String: Any]
+        ref.child("Tutors").child((Auth.auth().currentUser?.uid)!).updateChildValues(par)
+        
+        ref.child("Students").child(Auth.auth().currentUser?.uid ?? "").updateChildValues(par) { (err, resp) in
+            if err != nil {
+                
+            }
+        }
+    } else {
+        goLiveLable.text = "Go Live!!!"
+        let par = ["status": "off"] as [String: Any]
+        ref.child("Tutors").child((Auth.auth().currentUser?.uid)!).updateChildValues(par)
+        
+        ref.child("Students").child(Auth.auth().currentUser?.uid ?? "").updateChildValues(par) { (err, resp) in
+            if err != nil {
+                
+            }
+        }
+    }
+        
     }
     
     @IBAction func tutorRegistration(_ sender: Any) {
@@ -225,37 +254,38 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
         tutorEdit.isHidden = true
     }
     
-    @IBAction func nextToAddLoc(_ sender: Any) {
-        tutorEditLbl.text = "Meet up locations"
-        addScheduleStackView.isHidden = true
-        addPlaceStackView.isHidden = false
-    }
-    
-    @IBAction func backToSchdl(_ sender: Any) {
-        tutorEditLbl.text = "My Weekly Schedule"
-        addPlaceStackView.isHidden = true
-        addScheduleStackView.isHidden = false
-    }
     
     @IBAction func saveTutor(_ sender: Any) {
         
-        if major.text != nil && classification.text != nil && schoolEmail.text != nil && phoneNumberTxt.text != nil {
+        if major.text != nil && classification.text != nil && schoolEmail.text != nil && phoneNumber.text != nil {
             let parameters = [
-                "schedule": self.schedules,
                 "meetUpLocations":placeesDict,
                 "major": major.text ?? "",
                 "classification":classification.text ?? "",
                 "schoolEmail":schoolEmail.text ?? "",
-                "tutor": userName.text ?? ""] as [String : Any]
+                "tutor": userName.text ?? "",
+                "isTutorApproved":true,
+                "status":"live"] as [String : Any]
             
-            let para = ["phoneNumber":phoneNumber.text ?? ""] as [String : Any]
+            let userInfo: [String: Any] = ["uid": self.student.uid ?? " ",
+                                           "fName": self.student.fName ?? " ",
+                                           "full_name": self.student.full_name ?? " ",
+                                           "lName": self.student.lName ?? "",
+                                           "email": self.student.email ?? " ",
+                                           "phoneNumber": self.student.phoneNumebr ?? " ",
+                                           "customerId": self.student.customerId ?? " "]
+            
+            let para = ["phoneNumber":phoneNumber.text ?? "",
+                        "isTutor":true] as [String : Any]
+            let par = ["status": "live"] as [String: Any]
+            self.ref.child("Students").child(Auth.auth().currentUser?.uid ?? "").updateChildValues(par)
             
             ref.child("Students").child(Auth.auth().currentUser?.uid ?? "").updateChildValues(para) { (err, resp) in
                 if err != nil {
                     
                 }
             }
-            ref.child("Students").child((Auth.auth().currentUser?.uid)!).child("TutorProfile").updateChildValues(parameters) { (err, resp) in
+        ref.child("Students").child((Auth.auth().currentUser?.uid)!).child("TutorProfile").updateChildValues(parameters) { (err, resp) in
                 if err != nil {
                     
                 } else {
@@ -263,6 +293,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
                 }
             }
             ref.child("Tutors").child((Auth.auth().currentUser?.uid)!).setValue(parameters)
+            ref.child("Tutors").child((Auth.auth().currentUser?.uid)!).child("StudentProfile").setValue(userInfo)
         } else {
             // display warning
         }
@@ -273,12 +304,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     
     @IBAction func addPaymentMethod(_ sender: Any) {
         addCard()
-    }
-    
-    @IBAction func setSchedulePrsd(_ sender: Any) {
-        schedules.append(schedule)
-        scheduleTableView.reloadData()
-        schedule.removeAll()
     }
     
     
@@ -321,22 +346,6 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
     
     var storageRef: Storage {
         return Storage.storage()
-    }
-    
-    func setPersonalInfoChange(){
-        let user = Auth.auth().currentUser
-        if fNameTxt.text != nil || fNameTxt.text == "" {
-            self.ref.child("Students").child(user!.uid).child("fName").setValue(fNameTxt.text)
-        }
-        if lNameTxt.text != nil || lNameTxt.text == "" {
-            self.ref.child("Students").child(user!.uid).child("lName").setValue(lNameTxt.text)
-        }
-        if emailTxt.text != nil || emailTxt.text == "" {
-            self.ref.child("Students").child(user!.uid).child("email").setValue(emailTxt.text)
-        }
-        if phoneNumberTxt.text != nil || phoneNumberTxt.text == "" {
-            self.ref.child("Students").child(user!.uid).child("phoneNumber").setValue(phoneNumberTxt.text)
-        }
     }
     
     func addCard() {
@@ -453,36 +462,53 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
                 }
                 if let fname = myclass["full_name"] as? String {
                     UserDefaults.standard.set(fname, forKey: "full_name")
+                    self.student.full_name = fname
                 }
                 if let fname = myclass["fName"] as? String {
                     UserDefaults.standard.set(fname, forKey: "fName")
                     name = fname
-                    self.fNameTxt.text = fname
+                    
+                    self.student.fName = fname
                 }
                 if let phone = myclass["phoneNumber"] as? String {
                     UserDefaults.standard.set(phone, forKey: "phoneNumber")
-                    self.phoneNumberTxt.text = phone
-                } //email
+                    self.phoneNumber.text = phone
+                    self.student.phoneNumebr = phone
+                } //isTutorApproved
                 if let email = myclass["email"] as? String {
                     UserDefaults.standard.set(email, forKey: "email")
+                    self.student.email = email
+                } //status
+                if let status = myclass["status"] as? String {
+                    self.student.tutorStatus = status
+                }
+                if let tutor = myclass["isTutorApproved"] as? Bool {
+                    self.isTutor = tutor
+                    UserDefaults.standard.set(tutor, forKey: "isTutorApproved")
+                    self.student.tutorApproved = tutor
                 }
                 if let lname = myclass["lName"] as? String {
                     UserDefaults.standard.set(lname, forKey: "lName")
-                    self.lNameTxt.text = lname
-                    self.emailTxt.text = (Auth.auth().currentUser?.email)!
                     name += " " + lname + "\n " + (Auth.auth().currentUser?.email)!
+                    self.student.lName = lname
                 }
                 if let id = myclass["uid"] as? String {
                     UserDefaults.standard.set(id, forKey: "userId")
                     self.Id = id
-                } //customerID
-                
+                    self.student.uid = id
+                } //TutorProfile
+                if let tutorProfile = myclass["TutorProfile"] as? [String : AnyObject] {
+                    self.classification.text = tutorProfile["classification"] as? String
+                    self.schoolEmail.text = tutorProfile["schoolEmail"] as? String
+                    self.major.text = tutorProfile["major"] as? String
+                }
                 if let customer = myclass["customerId"] as? String {
                     UserDefaults.standard.set(customer, forKey: "customerId")
+                    self.student.customerId = customer
                 }
-                
                 self.userName.text = name
                 if let pictureURl = myclass["pictureUrl"] as? String {
+                    self.student.pictureUrl = pictureURl
                     UserDefaults.standard.set(pictureURl, forKey: "pictureUrl")
                     self.storageRef.reference(forURL: pictureURl).getData(maxSize: 1 * 1024 * 1024, completion: { (imgData, error) in
                     if error == nil {
@@ -597,6 +623,7 @@ class ProfileVC: UIViewController, UIImagePickerControllerDelegate, UINavigation
             let vc = segue.destination as? MyClassRoomVC
             let indexPath = myClassesTableView.indexPathForSelectedRow
             vc?.fetchObject = myClassesArr[(indexPath?.row)!]
+            vc?.isTutor = self.isTutor
         }
     }
 }
@@ -648,13 +675,7 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
                 myClassesTableView.deleteRows(at: [indexPath], with: .fade)
             }
         }
-        
-        if tableView == scheduleTableView {
-            if (editingStyle == UITableViewCellEditingStyle.delete) {
-                schedules.remove(at: indexPath.row)
-                scheduleTableView.deleteRows(at: [indexPath], with: .fade)
-            }
-        }
+       
         
         if tableView == meetUpLocationsTable {
             if (editingStyle == UITableViewCellEditingStyle.delete) {
@@ -681,10 +702,6 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             cell.textLabel!.text = myClassesArr[indexPath.row].title
             cell.textLabel?.numberOfLines = 0
             return cell
-        } else if tableView == scheduleTableView {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "scheduleCell", for: indexPath)
-            cell.textLabel!.text = schedules[indexPath.row]
-            return cell
         } else if tableView == meetUpLocationsTable {
             let cell = tableView.dequeueReusableCell(withIdentifier: "meetUpLocation", for: indexPath)
             cell.textLabel!.text = placeArr[indexPath.row].name
@@ -705,8 +722,6 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             return uni_sub_array.count
         } else if tableView == myClassesTableView {
             return myClassesArr.count
-        } else if tableView == scheduleTableView {
-            return schedules.count
         } else if tableView == meetUpLocationsTable {
             return placeArr.count
         } else {
@@ -725,9 +740,6 @@ extension ProfileVC: UITableViewDataSource, UITableViewDelegate {
             if tableViewTitleCounter == 2 {
                 return headerTitle
             }
-        }
-        if tableView == scheduleTableView {
-            return "My weekly schedul"
         }
         if tableView == meetUpLocationsTable {
             return "Meet up locations"
@@ -772,9 +784,10 @@ extension ProfileVC: GMSAutocompleteViewControllerDelegate {
     func viewController(_ viewController: GMSAutocompleteViewController, didAutocompleteWith place: GMSPlace) {
         
         self.place.name = place.name
-        self.place.coordinates = "\(place.coordinate)"
+        self.place.long = "\(place.coordinate.longitude)"
+        self.place.lat = "\(place.coordinate.latitude)"
         self.placeArr.append(self.place)
-        let arr = ["\(place.coordinate.latitude) * \(place.coordinate.longitude)", place.name]
+        let arr = ["\(place.coordinate.latitude)", "\(place.coordinate.longitude)", place.name, "\(place.formattedAddress ?? "")"]
         placeesDict["\(place.placeID)"] = arr
         meetUpLocationsTable.reloadData()
         dismiss(animated: true, completion: nil)
@@ -799,65 +812,4 @@ extension ProfileVC: GMSAutocompleteViewControllerDelegate {
         UIApplication.shared.isNetworkActivityIndicatorVisible = false
     }
 
-}
-
-
-extension ProfileVC:  UIPickerViewDelegate, UIPickerViewDataSource {
-    func numberOfComponents(in pickerView: UIPickerView) -> Int {
-        if pickerView == dayPicker {
-            return 1
-        } else if pickerView == hourPicker {
-            return 1
-        } else if pickerView == minPicker {
-            return 1
-        } else if pickerView == amPickr {
-            return 1
-        } else {
-            return 1
-        }
-    }
-    
-    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-        if pickerView == dayPicker {
-            return dayArray.count
-        } else if pickerView == hourPicker {
-            return hourArr.count
-        } else if pickerView == minPicker {
-            return minArr.count
-        } else if pickerView == amPickr {
-            return amArr.count
-        } else {
-            return 0
-        }
-    }
-    
-    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
-        if pickerView == dayPicker {
-            return dayArray[row]
-        } else if pickerView == hourPicker {
-            return hourArr[row]
-        } else if pickerView == minPicker {
-            return minArr[row]
-        } else if pickerView == amPickr {
-            return amArr[row]
-        } else {
-            return ""
-        }
-    }
-    
-    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-        if pickerView == dayPicker {
-            day = dayArray[row]
-            schedule = (day+"s "+hour+":"+min+" "+am)
-        } else if pickerView == hourPicker {
-            hour = hourArr[row]
-            schedule = (day+"s "+hour+":"+min+" "+am)
-        } else if pickerView == minPicker {
-            min = minArr[row]
-            schedule = (day+"s "+hour+":"+min+" "+am)
-        } else if pickerView == amPickr {
-            am = amArr[row]
-            schedule = (day+"s "+hour+":"+min+" "+am)
-        }
-    }
 }

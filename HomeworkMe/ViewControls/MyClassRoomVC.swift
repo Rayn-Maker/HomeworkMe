@@ -18,17 +18,17 @@ class MyClassRoomVC: UIViewController {
     @IBOutlet weak var popupView: UIView!
     @IBOutlet weak var categoryBtn: UISegmentedControl!
     @IBOutlet weak var postsTableView: UITableView!
-    @IBOutlet weak var scheduleTableView: UITableView!
     @IBOutlet weak var priceSlider: UISlider!
     @IBOutlet weak var priceLbl: UILabel!
     @IBOutlet weak var postPresetView: UIView!
-    @IBOutlet weak var datePicker: UIDatePicker!
     @IBOutlet weak var newPostView1: UIStackView!
     @IBOutlet weak var newPostView2: UIStackView!
     @IBOutlet weak var titleText: UITextField!
+    @IBOutlet weak var teacherName: UITextField!
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var inClassSwitch: UISwitch!
     @IBOutlet weak var activitySpinner: UIActivityIndicatorView!
+    @IBOutlet weak var homeWorkTitleLbl: UILabel!
     
     var fetchObject = FetchObject()
     var postTitle:String?; var price:Int = 5; var category:String!
@@ -42,19 +42,25 @@ class MyClassRoomVC: UIViewController {
     var schedule = String()
     var userStorage: StorageReference!
     let ref = Database.database().reference()
+    var isTutor = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         let currentDate: Date = Date()
         dismissKeyboard()
-        self.datePicker.minimumDate = currentDate
         postsTableView.estimatedRowHeight = 45
         postsTableView.rowHeight = UITableViewAutomaticDimension
         classRoomLbl.text = fetchObject.title
         fetchMyPostsKey()
         priceLbl.text = "$5"
-        datePicker.addTarget(self, action: #selector(dateChanged(_:)), for: .valueChanged)
+       
+       
+        if isTutor {
+            addPostBtn.isHidden = false
+        } else {
+            addPostBtn.isHidden = true 
+        }
     }
     
     @IBAction func addPostPrsd(_ sender: Any) {
@@ -75,11 +81,6 @@ class MyClassRoomVC: UIViewController {
     
     @IBAction func backPrsd(_ sender: Any) {
         self.dismiss(animated: true, completion: nil)
-    }
-    
-    @IBAction func setSchedulePrsd(_ sender: Any) {
-        schedules.append(schedule)
-        scheduleTableView.reloadData()
     }
     
     @IBAction func creatPostPrsd(_ sender: Any) {
@@ -122,7 +123,9 @@ class MyClassRoomVC: UIViewController {
     @IBAction func categoryPrsd(_ sender: UISegmentedControl) {
         if sender.selectedSegmentIndex == 0 {
             category = "Homework"
-            titleText.placeholder = "Homework# & Teacher"
+            titleText.placeholder = "#"
+            homeWorkTitleLbl.text = "Homework number or title"
+            
             titleLabel.text = priceLbl.text! + " " + fetchObject.title! + " Homework"
             newPostView1.isHidden = true
             newPostView2.isHidden = false
@@ -133,7 +136,8 @@ class MyClassRoomVC: UIViewController {
             postTitle = fetchObject.title! + " Test "
             newPostView1.isHidden = true
             newPostView2.isHidden = false
-            titleText.placeholder = "Test# & Teacher"
+            homeWorkTitleLbl.text = "Test number"
+            titleText.placeholder = "# "
             titleLabel.text = priceLbl.text! + " " + fetchObject.title! + " Test"
         }
         if sender.selectedSegmentIndex == 2 {
@@ -143,21 +147,24 @@ class MyClassRoomVC: UIViewController {
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "E MMM dd"
             let dateString = dateFormatter.string(from: Date())
-            titleText.placeholder = "Teacher's Name "
-            titleLabel.text = priceLbl.text! + " " + fetchObject.title! + "\(dateString) Notes "
+            homeWorkTitleLbl.text = ""
+            titleText.text = "Notes for \(dateString)"
+            titleLabel.text = priceLbl.text! + " " + fetchObject.title!
         }
         if sender.selectedSegmentIndex == 3 {
             category = "Tutoring"
             newPostView1.isHidden = true
             newPostView2.isHidden = false
-            titleText.placeholder = "Teacher's Name"
+            homeWorkTitleLbl.text = ""
+            titleText.text = "0"
             titleLabel.text = priceLbl.text! + " " + fetchObject.title! + " Tutoring"
         }
         if sender.selectedSegmentIndex == 4 {
             category = "Other"
             newPostView1.isHidden = true
             newPostView2.isHidden = false
-            titleText.placeholder = "Teacher's Name"
+            homeWorkTitleLbl.text = ""
+            titleText.text = "0"
             titleLabel.text = priceLbl.text! + " " + fetchObject.title! + " Other"
         }
     }
@@ -200,7 +207,7 @@ class MyClassRoomVC: UIViewController {
             authorLname = lname
         }
         if titleText.text != "" || titleText.text != nil {
-            let name = titleLabel.text! + " " + titleText.text!
+            let name = titleLabel.text! + " " + titleText.text! + " " + teacherName.text!
             let parameters = ["uid":postKey,
                               "name": name,
                               "authorID":Auth.auth().currentUser?.uid ?? " ",
@@ -211,12 +218,15 @@ class MyClassRoomVC: UIViewController {
                               "price": self.price,
                               "schedule": self.schedules,
                               "studentInClass":self.inClassSwitch.isOn,
-                              "postPic": picUrl ] as? [String : Any]
+                              "postPic": picUrl,
+                              "classId": self.fetchObject.uid ?? "",
+                              "className":self.fetchObject.title ?? ""] as? [String : Any]
             let postParam = [postKey : parameters]
-            let postParam2 = [postKey:postKey]
+            
+            
+        ref.child("Tutors").child((Auth.auth().currentUser?.uid)!).child("Posts").setValue(parameters)
             ref.child("Posts").updateChildValues(postParam)
-            ref.child("Classes").child(self.fetchObject.uid!).child("Posts").updateChildValues(postParam2)
-            ref.child("Students").child((Auth.auth().currentUser?.uid)!).child("Posts").updateChildValues(postParam2)
+            ref.child("Classes").child(self.fetchObject.uid!).child("Posts").updateChildValues(postParam)
             self.postPresetView.isHidden = true
             categoryBtn.isSelected = false
         } else {
@@ -398,9 +408,6 @@ extension MyClassRoomVC: UITableViewDataSource, UITableViewDelegate {
             default:
                 return 0
             }
-        }
-        if tableView == scheduleTableView {
-            return schedules.count
         } else{
             return 0
         }
@@ -409,9 +416,6 @@ extension MyClassRoomVC: UITableViewDataSource, UITableViewDelegate {
     func numberOfSections(in tableView: UITableView) -> Int {
         if tableView == postsTableView {
              return tableViewSections.count
-        }
-        if tableView == scheduleTableView {
-            return 1
         } else {
             return 0
         }
@@ -419,9 +423,7 @@ extension MyClassRoomVC: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         if tableView == postsTableView {
             return self.tableViewSections[section]
-        }
-        if tableView == scheduleTableView {
-            return "Schedule"
+        
         } else {
             return ""
         }
@@ -435,7 +437,7 @@ extension MyClassRoomVC: UITableViewDataSource, UITableViewDelegate {
             var data = Data()
             switch (indexPath.section) { //["All","Homework", "Test","Notes","Tutoring","Other"]
             case 0:
-                cellTxt = " " +  myPostArr[indexPath.row].title! + "\n~" + myPostArr[indexPath.row].authorName! + "\n \(functions.getTimeSince(date: myPostArr[indexPath.row].timeStamp!))"
+                cellTxt = " " +  myPostArr[indexPath.row].title! + "\n" + myPostArr[indexPath.row].authorName! + "\n \(functions.getTimeSince(date: myPostArr[indexPath.row].timeStamp!))"
                 if myPostArr[indexPath.row].postPic != nil {
                     urlString = myPostArr[indexPath.row].postPic
                     data = myPostArr[indexPath.row].data
@@ -481,11 +483,7 @@ extension MyClassRoomVC: UITableViewDataSource, UITableViewDelegate {
 
             cell.imageView?.image = imageWithImage(image: UIImage(named: "manInWater")!, scaledToSize: CGSize(width: 30, height: 30))
             return cell
-        }
-        if tableView == scheduleTableView {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "scheduleCell", for: indexPath)
-            cell.textLabel?.text = schedules[indexPath.row]
-            return cell
+      
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "postsCell", for: indexPath)
             
@@ -520,33 +518,7 @@ extension MyClassRoomVC: UITableViewDataSource, UITableViewDelegate {
                 print(seg)
             }
         }
-        if tableView == scheduleTableView {
-            
-        }
+       
     }
     
- 
-    
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if tableView == scheduleTableView {
-            if (editingStyle == UITableViewCellEditingStyle.delete) {
-                schedules.remove(at: indexPath.row)
-                scheduleTableView.deleteRows(at: [indexPath], with: .fade)
-            }
-        }
-    }
-    
- 
-//
-//    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
-//        return ""
-//    }
-//
-//    func numberOfComponents(in pickerView: UIPickerView) -> Int {
-//        return 1
-//    }
-//
-//    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-//        return 1
-//    }
 }

@@ -24,6 +24,35 @@ class Student {
     var billing: Billing?
     var postedPosts: [Post]?
     var uid: String?
+    var phoneNumebr: String?
+    var posts2: [String: AnyObject]?
+    var studentProfile: [String: AnyObject]?
+    var full_name: String?
+    var tutorApproved: Bool?
+    var customerId: String?
+    var tutorStatus: String?
+    var ratings: String?
+    var comments: Note?
+    var pictureUrl: String!
+    var classification: String!
+    var meetUpLocation: [String:[String]]!
+    var schedule: [String]!
+    var major: String!
+    var schoolEmail:String!
+    var places = [Place]()
+    var requestsArrPending = [Request]()
+    var requestsArrAccepted = [Request]()
+    var requestsArrRejected = [Request]()
+    var requestsSentPending = [Request]()
+    var requestsSentApprd = [Request]()
+    var requestsSentReject = [Request]()
+    var request = Request()
+    var requestsObject = [String:AnyObject]()
+}
+
+enum Location {
+    case startLocation
+    case destinationLocation
 }
 
 class Classroom {
@@ -34,6 +63,19 @@ class Classroom {
     var title: String?
     var createdBy: String?
     var uid: String?
+}
+
+class Request {
+    var place = Place()
+    var reqID: String!
+    var author: String!
+    var authorId: String!
+    var time: Date!
+    var timeString: String!
+    var postTite: String!
+    var phoneNumber: String!
+    var picUrl: String!
+    var reqStatus: String!
 }
 
 class Post {
@@ -62,8 +104,10 @@ class Post {
 }
 
 struct Place {
-    var name: String?
-    var coordinates: String?
+    var name: String!
+    var long: String!
+    var lat: String!
+    var address: String!
 }
 
 

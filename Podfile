@@ -19,8 +19,9 @@ target 'HomeworkMe' do
 	pod 'GooglePlaces'
   	pod 'GooglePlacePicker'
   	pod 'GoogleMaps'
-	pod 'FacebookLogin'
-	pod 'FacebookCore'
+	pod 'GooglePlacesAPI'
 	pod 'GoogleSignIn'
-	pod 'FBSDKLoginKit'
+	pod 'FacebookLogin'
+	pod 'FacebookCore' 
+	pod 'FBSDKLoginKit' 
 end

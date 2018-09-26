@@ -14,7 +14,7 @@
             buildForArchiving = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C00B684D41708DF950719038BEA39C0E"
+               BlueprintIdentifier = "FDEBA7C0DDFCBDE38B51E78011329003"
                BlueprintName = "SquarePointOfSaleSDK"
                ReferencedContainer = "container:Pods.xcodeproj"
                BuildableName = "SquarePointOfSaleSDK.framework">

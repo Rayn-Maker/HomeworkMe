@@ -50,15 +50,13 @@ final class StripeClient {
     return url
   }()
     
-    func completeCharge(with token: STPToken, amount: Int, completion: @escaping (Result) -> Void) {
+    func completeCharge(with customer: String, amount: Int, completion: @escaping (Result) -> Void) {
         // 1
         let url = baseURL.appendingPathComponent("charge")
-        let customer =  UserDefaults.standard.string(forKey: "customerId")
-//        let email =  UserDefaults.standard.string(forKey: "email")
+
         // 2
         let params: [String: Any] = [
-//            "tokenId": token.tokenId,
-            "customer" : customer ?? "",
+            "customer" : customer,
             "amount": amount,
             "currency": Constants.defaultCurrency,
             "description": Constants.defaultDescription

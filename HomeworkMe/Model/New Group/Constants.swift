@@ -35,5 +35,6 @@ enum Constants {
   static let baseURLString = "https://fierce-gorge-75882.herokuapp.com/"
   static let defaultCurrency = "usd"
   static let defaultDescription = "Purchase from Homeworkme iOS"
+      
 //    let customerId = UserDefaults.standard.string(forKey: "customerId")
 }
