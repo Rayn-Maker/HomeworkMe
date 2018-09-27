@@ -27,8 +27,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, GIDSignInDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         STPPaymentConfiguration.shared().publishableKey = Constants.publishableKey
         FirebaseApp.configure()
-        GMSPlacesClient.provideAPIKey("AIzaSyD5kvNqtnOYCyn1ig5OQ7px_cwYqgyuEcM")
-        GMSServices.provideAPIKey("AIzaSyD5kvNqtnOYCyn1ig5OQ7px_cwYqgyuEcM")
+        GMSPlacesClient.provideAPIKey("AIzaSyDV7NWQ25BT5pISVM5b9vkRFJrK8TjXypY")
+        GMSServices.provideAPIKey("AIzaSyDV7NWQ25BT5pISVM5b9vkRFJrK8TjXypY")
         logUser()
         GIDSignIn.sharedInstance().clientID = FirebaseApp.app()?.options.clientID
         GIDSignIn.sharedInstance().delegate = self

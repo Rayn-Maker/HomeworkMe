@@ -31,7 +31,10 @@ class MyRequests: UIViewController, MFMessageComposeViewControllerDelegate  {
     @IBOutlet weak var switchView: UIBarButtonItem!
     @IBOutlet weak var tutorReqView: UIView!
     @IBOutlet weak var tutorReqTable: UITableView!
-    @IBOutlet weak var googleMaps: GMSMapView!
+    @IBOutlet weak var mapViewDisplay: UIView!
+    
+    @IBOutlet weak var mapView: GMSMapView!
+    
     
     var tutor = Student()
     var student = Student()
@@ -43,12 +46,18 @@ class MyRequests: UIViewController, MFMessageComposeViewControllerDelegate  {
     var handle: DatabaseHandle?
     var handle2: DatabaseHandle?
     var isTutor = true
+    
+// google map setup
     var place = Place()
     var locationManager = CLLocationManager()
-    var locationSelected = Location.startLocation
-    var locationStart = CLLocation()
-    var locationEnd = CLLocation()
-   
+    var currentLocation: CLLocation?
+    var placesClient: GMSPlacesClient!
+    var zoomLevel: Float = 15.0
+    // An array to hold the list of likely places.
+    var likelyPlaces: [GMSPlace] = []
+    
+    // The currently selected place.
+    var selectedPlace: GMSPlace?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -107,6 +116,10 @@ class MyRequests: UIViewController, MFMessageComposeViewControllerDelegate  {
         self.ref.child("Students").child(request.authorId ?? "").child("sentReqs").child(request.reqID).updateChildValues(par)
         self.ref.child("Tutors").child(Auth.auth().currentUser?.uid ?? "").child("requests").child(request.reqID).updateChildValues(par)
         requestersView.isHidden = true
+        
+        drawPath(start: currentLocation!, end: request.place)
+        mapViewDisplay.isHidden = false
+        
     }
     
     
@@ -277,57 +290,57 @@ class MyRequests: UIViewController, MFMessageComposeViewControllerDelegate  {
         })
     }
     
+    func drawPath(start:CLLocation, end:Place){
+        let origin = "\(start.coordinate.latitude ),\(start.coordinate.longitude)"
+        let destination = "\(end.lat ?? ""),\(end.long ?? "")"
+        
+        let urlString = "https://maps.googleapis.com/maps/api/directions/json?origin=\(origin)&destination=\(destination)&mode=driving&key=AIzaSyDV7NWQ25BT5pISVM5b9vkRFJrK8TjXypY"
+        
+        let url = URL(string: urlString)
+        URLSession.shared.dataTask(with: url!, completionHandler: {
+            (data, response, error) in
+            if(error != nil){
+                print("error")
+            }else{
+                do{
+                    let json = try JSONSerialization.jsonObject(with: data!, options:.allowFragments) as! [String : AnyObject]
+                    let routes = json["routes"] as! NSArray
+                    self.mapView.clear()
+                    
+                    OperationQueue.main.addOperation({
+                        for route in routes
+                        {
+                            let routeOverviewPolyline:NSDictionary = (route as! NSDictionary).value(forKey: "overview_polyline") as! NSDictionary
+                            let points = routeOverviewPolyline.object(forKey: "points")
+                            let path = GMSPath.init(fromEncodedPath: points! as! String)
+                            let polyline = GMSPolyline.init(path: path)
+                            polyline.strokeWidth = 3
+                            
+                            let bounds = GMSCoordinateBounds(path: path!)
+                            self.mapView!.animate(with: GMSCameraUpdate.fit(bounds, withPadding: 30.0))
+                            
+                            polyline.map = self.mapView
+                            
+                        }
+                    })
+                }catch let error as NSError{
+                    print("error:\(error)")
+                }
+            }
+        }).resume()
+    }
+    
     /// Google maps implementation
     func googleMapsetup() {
         locationManager = CLLocationManager()
-        locationManager.delegate = self
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.startUpdatingLocation()
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.startMonitoringSignificantLocationChanges()
+        locationManager.requestAlwaysAuthorization()
+        locationManager.distanceFilter = 50
+        locationManager.startUpdatingLocation()
+        locationManager.delegate = self
         
-        //Your map initiation code
-        let camera = GMSCameraPosition.camera(withLatitude: -7.9293122, longitude: 112.5879156, zoom: 15.0)
+        placesClient = GMSPlacesClient.shared()
         
-        self.googleMaps.camera = camera
-        self.googleMaps.delegate = self
-        self.googleMaps?.isMyLocationEnabled = true
-        self.googleMaps.settings.myLocationButton = true
-        self.googleMaps.settings.compassButton = true
-        self.googleMaps.settings.zoomGestures = true
-    }
-    
-    func drawPath(startLocation: CLLocation, endLocation: CLLocation)
-    {
-        let origin = "\(startLocation.coordinate.latitude),\(startLocation.coordinate.longitude)"
-        let destination = "\(place.lat),\(place.long)"
-        
-        
-        let url = "https://maps.googleapis.com/maps/api/directions/json?origin=\(origin)&destination=\(destination)&mode=driving"
-        
-        Alamofire.request(url).responseJSON { response in
-            
-            print(response.request as Any)  // original URL request
-            print(response.response as Any) // HTTP URL response
-            print(response.data as Any)     // server data
-            print(response.result as Any)   // result of response serialization
-            
-//            let json = JSON(data: response.data!)
-//            let routes = json["routes"].arrayValue
-//
-//            // print route using Polyline
-//            for route in routes
-//            {
-//                let routeOverviewPolyline = route["overview_polyline"].dictionary
-//                let points = routeOverviewPolyline?["points"]?.stringValue
-//                let path = GMSPath.init(fromEncodedPath: points!)
-//                let polyline = GMSPolyline.init(path: path)
-//                polyline.strokeWidth = 4
-//                polyline.strokeColor = UIColor.red
-//                polyline.map = self.googleMaps
-//            }
-            
-        }
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -447,6 +460,7 @@ extension MyRequests: UITableViewDelegate, UITableViewDataSource {
             } else if indexPath.section == 1 {
                 request = tutor.requestsArrAccepted[indexPath.row]
                 connectProfile(req: tutor.requestsArrAccepted[indexPath.row])
+               
             } else if indexPath.section == 2 {
                 request = tutor.requestsArrRejected[indexPath.row]
                 connectProfile(req: tutor.requestsArrRejected[indexPath.row])
@@ -455,20 +469,80 @@ extension MyRequests: UITableViewDelegate, UITableViewDataSource {
     }
 }
 
-extension MyRequests: GMSMapViewDelegate ,  CLLocationManagerDelegate {
+
+extension MyRequests: CLLocationManagerDelegate, GMSMapViewDelegate {
+    
+    // Handle incoming location events.
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let location: CLLocation = locations.last!
+        currentLocation = locations.last
+        print("Location: \(location)")
+        
+        let camera = GMSCameraPosition.camera(withLatitude: location.coordinate.latitude,
+                                              longitude: location.coordinate.longitude,
+                                              zoom: zoomLevel)
+        
+        
+        
+        
+        // Add the map to the view, hide it until we've got a location update.
+        self.mapView.camera = camera
+        self.mapView.delegate = self
+        self.mapView?.isMyLocationEnabled = true
+        self.mapView.settings.myLocationButton = true
+        self.mapView.settings.compassButton = true
+        self.mapView.settings.zoomGestures = true
+
+    }
+    
+    // Handle authorization for the location manager.
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        switch status {
+        case .restricted:
+            print("Location access was restricted.")
+        case .denied:
+            print("User denied access to location.")
+            // Display the map using the default location.
+            mapView.isHidden = false
+        case .notDetermined:
+            print("Location status not determined.")
+        case .authorizedAlways: fallthrough
+        case .authorizedWhenInUse:
+            print("Location status is OK.")
+        }
+    }
+    
+    // Handle location manager errors.
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Error to get location : \(error)")
+        locationManager.stopUpdatingLocation()
+        print("Error: \(error)")
     }
     
-    func wasCancelled(_ viewController: GMSAutocompleteViewController) {
-        self.dismiss(animated: true, completion: nil)
+    
+    func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
+        self.mapView.isMyLocationEnabled = true
     }
     
-    func didRequestAutocompletePredictions(_ viewController: GMSAutocompleteViewController) {
-        UIApplication.shared.isNetworkActivityIndicatorVisible = true
+    func mapView(_ mapView: GMSMapView, willMove gesture: Bool) {
+        self.mapView.isMyLocationEnabled = true
+        
+        if (gesture) {
+            mapView.selectedMarker = nil
+        }
     }
     
-    func didUpdateAutocompletePredictions(_ viewController: GMSAutocompleteViewController) {
-        UIApplication.shared.isNetworkActivityIndicatorVisible = false
+    func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
+        self.mapView.isMyLocationEnabled = true
+        return false
+    }
+    
+    func mapView(_ mapView: GMSMapView, didTapAt coordinate: CLLocationCoordinate2D) {
+        print("COORDINATE \(coordinate)") // when you tapped coordinate
+    }
+    
+    func didTapMyLocationButton(for mapView: GMSMapView) -> Bool {
+        self.mapView.isMyLocationEnabled = true
+        self.mapView.selectedMarker = nil
+        return false
     }
 }

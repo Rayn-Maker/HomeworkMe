@@ -1400,7 +1400,7 @@
                                     <constraint firstItem="sdU-eF-He6" firstAttribute="top" secondItem="sP7-hz-Tba" secondAttribute="bottom" constant="14" id="r8h-U3-BYc"/>
                                 </constraints>
                             </view>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LQQ-i1-0me">
+                            <view hidden="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="LQQ-i1-0me">
                                 <rect key="frame" x="0.0" y="28" width="375" height="590"/>
                                 <subviews>
                                     <view contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="l5e-2M-slV" customClass="GMSMapView">
@@ -1449,8 +1449,9 @@
                         <outlet property="activitySpinner" destination="AFt-T8-cHP" id="ZpG-Sy-Q9b"/>
                         <outlet property="bioLable" destination="j64-af-mql" id="cgq-m8-MLP"/>
                         <outlet property="callBtn" destination="PgZ-01-2RI" id="fc2-NT-qcj"/>
-                        <outlet property="googleMaps" destination="l5e-2M-slV" id="qUU-Y3-ZsD"/>
                         <outlet property="image" destination="6rQ-UM-Evd" id="DuC-Rn-QoZ"/>
+                        <outlet property="mapView" destination="l5e-2M-slV" id="8Fy-2i-ej6"/>
+                        <outlet property="mapViewDisplay" destination="LQQ-i1-0me" id="TOI-fn-KMq"/>
                         <outlet property="meetUpLocation" destination="ZOd-xB-Q1b" id="iJK-Cc-WCx"/>
                         <outlet property="myRequestsTable" destination="mgP-L1-xg0" id="WDJ-SM-ScB"/>
                         <outlet property="navBat" destination="Yn0-6r-x2a" id="Civ-r3-1iO"/>
